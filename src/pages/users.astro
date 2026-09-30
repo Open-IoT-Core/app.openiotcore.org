@@ -102,7 +102,7 @@ import Footer from '../components/Footer.astro';
                 <th class="ps-3">Usuario</th>
                 <th>Correo corporativo</th>
                 <th>Área</th>
-                <th>Llave RFID</th>
+                <th>Llaves RFID Asignadas</th>
                 <th>Estado</th>
                 <th class="text-end pe-3">Acción</th>
               </tr>
@@ -226,24 +226,39 @@ import Footer from '../components/Footer.astro';
       }
 
       tbody.innerHTML = users.map((u: any) => {
-        const userCred = creds.find((c: any) => c.usuario_id === u.id);
-        const rfidCode = userCred ? userCred.uid_hex : '<span class="text-muted">Sin tarjeta</span>';
+        // Filter ALL credentials matching this user (supports multiple RFID cards)
+        const userCreds = creds.filter((c: any) => c.usuario_id === u.id);
+
+        const rfidHtml = userCreds.length > 0
+          ? userCreds.map((c: any) => `
+              <div class="d-inline-flex align-items-center bg-light border px-2 py-1 rounded me-1 mb-1 shadow-sm">
+                <code class="text-dark fw-bold me-1 font-monospace" style="font-size: 13px;">${c.uid_hex}</code>
+                ${c.estado === 'REVOCADA' 
+                  ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 9px;">REVOCADA</span>'
+                  : `<button type="button" class="btn btn-link p-0 ms-1 text-danger btn-revoke-single text-decoration-none" data-cred-id="${c.id}" data-uid="${c.uid_hex}" title="Revocar tarjeta ${c.uid_hex}"><i class="bi bi-x-circle-fill"></i></button>`}
+              </div>
+            `).join('')
+          : '<span class="text-muted small">Sin tarjeta asignada</span>';
 
         return `
           <tr>
             <td class="ps-3 fw-bold text-dark">${u.nombre} ${u.apellido}</td>
             <td class="text-muted">${u.correo}</td>
             <td>${u.departamento || 'General'}</td>
-            <td><code class="bg-light border px-2 py-1 text-dark rounded fw-bold">${rfidCode}</code></td>
+            <td>
+              <div class="d-flex flex-wrap align-items-center">
+                ${rfidHtml}
+              </div>
+            </td>
             <td>
               <span class="badge ${u.estado === 'ACTIVO' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'} px-2 py-1">
                 <i class="bi bi-circle-fill me-1" style="font-size: 7px;"></i>${u.estado}
               </span>
             </td>
             <td class="text-end pe-3">
-              ${userCred ? `
-                <button class="btn btn-outline-secondary btn-sm btn-revoke px-3" data-cred-id="${userCred.id}">
-                  Revocar
+              ${userCreds.length > 0 ? `
+                <button class="btn btn-outline-secondary btn-sm px-3 btn-revoke-all" data-user-name="${u.nombre}" data-cred-ids='${JSON.stringify(userCreds.map((c: any) => c.id))}'>
+                  Revocar Todo
                 </button>
               ` : '<span class="text-muted small">--</span>'}
             </td>
@@ -251,10 +266,28 @@ import Footer from '../components/Footer.astro';
         `;
       }).join('');
 
-      document.querySelectorAll('.btn-revoke').forEach((btn) => {
+      // Click event for revoking individual card
+      document.querySelectorAll('.btn-revoke-single').forEach((btn) => {
         btn.addEventListener('click', (e) => {
           const credId = (e.currentTarget as HTMLButtonElement).getAttribute('data-cred-id');
-          if (credId) revokeCredential(credId);
+          const uid = (e.currentTarget as HTMLButtonElement).getAttribute('data-uid');
+          if (credId) revokeCredential(credId, uid || '');
+        });
+      });
+
+      // Click event for revoking all cards for user
+      document.querySelectorAll('.btn-revoke-all').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          const name = (e.currentTarget as HTMLButtonElement).getAttribute('data-user-name');
+          const rawIds = (e.currentTarget as HTMLButtonElement).getAttribute('data-cred-ids');
+          if (!rawIds) return;
+          const ids: string[] = JSON.parse(rawIds);
+
+          if (!confirm(`¿Seguro que deseas revocar TODAS las ${ids.length} tarjetas de ${name}?`)) return;
+          for (const id of ids) {
+            await revokeCredentialSilent(id);
+          }
+          loadUsers();
         });
       });
 
@@ -290,7 +323,7 @@ import Footer from '../components/Footer.astro';
     });
 
     btnSimular?.addEventListener('click', () => {
-      const sampleUids = ['4A8F12C9', 'E200194B', 'B743110C', '5330BA06', 'A4B2C190'];
+      const sampleUids = ['4A8F12C9', 'E200194B', 'B743110C', '5330BA06', '0CDC4305', 'A4B2C190'];
       const randomUid = sampleUids[Math.floor(Math.random() * sampleUids.length)];
       handleDetectedCard(randomUid, 'Simulación de prueba');
     });
@@ -343,13 +376,17 @@ import Footer from '../components/Footer.astro';
       statusEscuchar.innerHTML = `<i class="bi bi-check2-circle me-1"></i> Lectura recibida: <strong>${uidHex.toUpperCase()}</strong>`;
     }
 
-    // Stop listening after successful scan
     isListening = false;
     updateListeningUI();
   }
 
-  async function revokeCredential(credId: string) {
-    if (!confirm('¿Seguro que deseas revocar esta llave RFID?')) return;
+  async function revokeCredential(credId: string, uid: string) {
+    if (!confirm(`¿Seguro que deseas revocar la tarjeta ${uid || credId}?`)) return;
+    await revokeCredentialSilent(credId);
+    loadUsers();
+  }
+
+  async function revokeCredentialSilent(credId: string) {
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/api/v1/credentials/${credId}/revoke`, {
@@ -357,9 +394,8 @@ import Footer from '../components/Footer.astro';
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Error al revocar');
-      loadUsers();
     } catch (e: any) {
-      alert(e.message);
+      console.error(e.message);
     }
   }
 
@@ -451,7 +487,6 @@ import Footer from '../components/Footer.astro';
         try {
           const msg = JSON.parse(event.data);
           
-          // Trigger when device scans any card or access validation occurs
           if (msg.event === 'card_scanned' && msg.payload?.uid_hex) {
             handleDetectedCard(msg.payload.uid_hex, `Cerradura ${msg.payload.deviceId || ''}`);
           } else if (msg.event === 'access_event' && msg.payload?.uid_hex) {
