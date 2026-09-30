@@ -4,20 +4,26 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Reglas de Acceso y Horarios - OpenIoTCore">
+<Layout title="Control de Acceso - Reglas y Permisos - OpenIoTCore">
   <Navbar />
 
   <main class="container-fluid px-4 py-4 flex-grow-1">
+    <!-- Header -->
+    <div class="mb-4">
+      <h3 class="fw-bold text-dark mb-1">
+        Asignar regla de acceso y horarios
+      </h3>
+      <p class="text-muted small mb-0">Configura en qué puertas, días y horarios específicos tendrá autorización esta persona.</p>
+    </div>
+
     <div id="perm-alert"></div>
 
-    <!-- Card Principal: Asignar regla de acceso y horarios -->
+    <!-- Formulario Principal -->
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body p-4">
-        <h5 class="fw-bold text-dark mb-1">Asignar regla de acceso y horarios</h5>
-        <p class="text-muted small mb-4">Configura en qué puertas, días y horarios específicos tendrá autorización esta persona.</p>
-
         <form id="form-permission">
-          <div class="row g-3 mb-3">
+          <!-- Fila 1: Persona autorizada & Puerta/Área -->
+          <div class="row g-3 mb-4">
             <div class="col-md-6">
               <label class="form-label fw-bold small text-dark">Persona autorizada</label>
               <select class="form-select" id="select-persona" required>
@@ -71,15 +77,24 @@ import Footer from '../components/Footer.astro';
           <div class="row g-3 mb-4">
             <div class="col-md-4">
               <label class="form-label fw-bold small text-dark">Hora de inicio</label>
-              <input type="time" class="form-control" id="hora-inicio" value="08:00" required />
+              <div class="input-group">
+                <input type="time" class="form-control" id="hora-inicio" value="08:00" required />
+                <span class="input-group-text bg-white"><i class="bi bi-clock text-muted"></i></span>
+              </div>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-bold small text-dark">Hora de salida</label>
-              <input type="time" class="form-control" id="hora-fin" value="18:00" required />
+              <div class="input-group">
+                <input type="time" class="form-control" id="hora-fin" value="18:00" required />
+                <span class="input-group-text bg-white"><i class="bi bi-clock text-muted"></i></span>
+              </div>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-bold small text-dark">Vigencia hasta</label>
-              <input type="date" class="form-control" id="fecha-limite" value="2026-12-31" required />
+              <div class="input-group">
+                <input type="date" class="form-control" id="fecha-limite" value="2026-12-31" required />
+                <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-muted"></i></span>
+              </div>
             </div>
           </div>
 
@@ -155,6 +170,14 @@ import Footer from '../components/Footer.astro';
     setupForm();
   });
 
+  function formatDays(daysArray: any) {
+    if (!Array.isArray(daysArray) || daysArray.length === 0) return 'Ningún día';
+    const names = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+    if (daysArray.length === 7) return 'Todos los días';
+    if (daysArray.length === 5 && daysArray.join(',') === '1,2,3,4,5') return 'Lun - Vie';
+    return daysArray.map((d: number) => names[d - 1] || d).join(', ');
+  }
+
   async function loadOptions() {
     const token = localStorage.getItem('token');
     const selectUsr = document.getElementById('select-persona') as HTMLSelectElement;
@@ -199,18 +222,18 @@ import Footer from '../components/Footer.astro';
 
       tbody.innerHTML = perms.map((p: any) => `
         <tr>
-          <td class="ps-4 fw-bold">${p.nombre} ${p.apellido}</td>
-          <td>${p.ubicacion}</td>
-          <td class="small">${p.hora_inicio} - ${p.hora_fin}</td>
-          <td class="small text-muted">Lun - Vie</td>
+          <td class="ps-4 fw-bold text-dark">${p.nombre} ${p.apellido}</td>
+          <td class="fw-medium">${p.ubicacion}</td>
+          <td class="small font-monospace text-secondary">${p.hora_inicio} - ${p.hora_fin}</td>
+          <td class="small fw-semibold text-primary">${formatDays(p.dias_semana)}</td>
           <td class="small text-muted">${new Date(p.fecha_limite).toLocaleDateString()}</td>
           <td>
-            <span class="badge ${p.activo ? 'bg-success' : 'bg-secondary'}">
+            <span class="badge ${p.activo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'} px-2 py-1">
               ${p.activo ? 'Habilitado' : 'Pausado'}
             </span>
           </td>
           <td class="text-end pe-4">
-            <button class="btn btn-outline-danger btn-sm btn-delete-perm" data-perm-id="${p.id}">
+            <button class="btn btn-outline-danger btn-sm px-3 btn-delete-perm" data-perm-id="${p.id}">
               Eliminar
             </button>
           </td>
@@ -254,17 +277,27 @@ import Footer from '../components/Footer.astro';
 
       const selectedDays: number[] = [];
       [1,2,3,4,5,6,7].forEach((d) => {
-        const chk = document.getElementById(`day-${['lun','mar','mie','jue','vie','sab','dom'][d-1]}`) as HTMLInputElement;
+        const dayKey = ['lun','mar','mie','jue','vie','sab','dom'][d-1];
+        const chk = document.getElementById(`day-${dayKey}`) as HTMLInputElement;
         if (chk && chk.checked) selectedDays.push(d);
       });
+
+      if (selectedDays.length === 0) {
+        alertEl.innerHTML = `<div class="alert alert-warning">Por favor selecciona al menos un día de la semana.</div>`;
+        return;
+      }
+
+      const hIniVal = (document.getElementById('hora-inicio') as HTMLInputElement).value.trim();
+      const hFinVal = (document.getElementById('hora-fin') as HTMLInputElement).value.trim();
+      const fLimVal = (document.getElementById('fecha-limite') as HTMLInputElement).value.trim();
 
       const payload = {
         usuario_id: (document.getElementById('select-persona') as HTMLSelectElement).value,
         dispositivo_id: (document.getElementById('select-puerta') as HTMLSelectElement).value,
-        hora_inicio: (document.getElementById('hora-inicio') as HTMLInputElement).value + ':00',
-        hora_fin: (document.getElementById('hora-fin') as HTMLInputElement).value + ':00',
+        hora_inicio: hIniVal ? (hIniVal.split(':').length === 2 ? `${hIniVal}:00` : hIniVal) : '08:00:00',
+        hora_fin: hFinVal ? (hFinVal.split(':').length === 2 ? `${hFinVal}:00` : hFinVal) : '18:00:00',
         dias_semana: selectedDays,
-        fecha_limite: (document.getElementById('fecha-limite') as HTMLInputElement).value + 'T23:59:59Z'
+        fecha_limite: fLimVal ? `${fLimVal}T23:59:59Z` : new Date(Date.now() + 365*24*60*60*1000).toISOString()
       };
 
       try {
@@ -276,9 +309,8 @@ import Footer from '../components/Footer.astro';
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al guardar regla');
 
-        alertEl.innerHTML = `<div class="alert alert-success">¡Regla de acceso guardada y sincronizada con la puerta!</div>`;
+        alertEl.innerHTML = `<div class="alert alert-success">¡Regla de acceso guardada y sincronizada por WebSocket con la puerta!</div>`;
         loadPermissions();
-        form.reset();
       } catch (err: any) {
         alertEl.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
       }
