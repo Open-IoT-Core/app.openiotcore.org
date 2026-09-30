@@ -148,7 +148,7 @@ import Footer from '../components/Footer.astro';
 </Layout>
 
 <script>
-  const API_URL = 'https://api.openiotcore.org';
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
 
   // Sample forensic audit log matching the user prompt Image 4
   const SAMPLE_AUDIT_LOGS = [
@@ -229,10 +229,6 @@ import Footer from '../components/Footer.astro';
   let currentLogs = [...SAMPLE_AUDIT_LOGS];
 
   document.addEventListener('DOMContentLoaded', async () => {
-    // Set default dates
-    const today = new Date().toISOString().split('T')[0];
-    const startMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-    
     const startInput = document.getElementById('filter-date-start') as HTMLInputElement;
     const endInput = document.getElementById('filter-date-end') as HTMLInputElement;
     if (startInput) startInput.value = "2026-10-01";
@@ -253,24 +249,29 @@ import Footer from '../components/Footer.astro';
   async function loadRealLogs() {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/v1/access/logs`, {
+      const res = await fetch(`${API_URL}/api/v1/logs`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data) && data.length > 0) {
-          const mapped = data.map((item: any, index: number) => ({
-            id: `LOG-${item.id || index + 100}`,
-            fecha: item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : new Date().toLocaleString('es-PE'),
-            puerta: item.dispositivo_nombre || item.dispositivo_id || "Puerta Principal",
-            tarjetaUid: item.tarjeta_uid || "A4B2C190",
-            persona: item.usuario_nombre || (item.concedido ? "Usuario Autorizado" : "Tarjeta no registrada"),
-            area: item.area || "General",
-            resultado: item.concedido ? "GRANTED" : "DENIED",
-            motivo: item.concedido ? "Acceso concedido" : (item.motivo_rechazo || "Credencial inexistente en base de datos"),
-            ip: item.ip || "192.168.1.105",
-            modo: item.modo || "En línea"
-          }));
+        const rawItems = data.resultados || (Array.isArray(data) ? data : []);
+        if (rawItems.length > 0) {
+          const mapped = rawItems.map((item: any, index: number) => {
+            const isGranted = item.evento === 'PERMITIDO';
+            const personName = item.nombre ? `${item.nombre} ${item.apellido}` : (isGranted ? "Usuario Autorizado" : "Tarjeta no registrada");
+            return {
+              id: `LOG-${item.id || index + 100}`,
+              fecha: item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : new Date().toLocaleString('es-PE'),
+              puerta: item.ubicacion || item.dispositivo_id || "Puerta Principal",
+              tarjetaUid: item.uid_leido || "A4B2C190",
+              persona: personName,
+              area: item.departamento || "General",
+              resultado: isGranted ? "GRANTED" : "DENIED",
+              motivo: item.razon || (isGranted ? "Acceso autorizado" : "Acceso denegado"),
+              ip: item.ip || "192.168.1.105",
+              modo: "En línea"
+            };
+          });
           currentLogs = [...mapped, ...SAMPLE_AUDIT_LOGS];
         }
       }
@@ -387,7 +388,7 @@ import Footer from '../components/Footer.astro';
           <div>
             ${log.resultado === 'GRANTED' 
               ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle me-1"></i>Concedido</span>'
-              : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-x-circle me-1"></i>Denegado</span>'}
+              : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-x-circle-fill me-1"></i>Denegado</span>'}
           </div>
         </div>
       </div>
