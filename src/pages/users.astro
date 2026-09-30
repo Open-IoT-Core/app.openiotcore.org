@@ -27,7 +27,12 @@ import Footer from '../components/Footer.astro';
     <!-- Card 1: Vincular nueva tarjeta física -->
     <div class="card shadow-sm border-0 mb-4">
       <div class="card-body p-4">
-        <h5 class="fw-bold text-dark mb-1">Vincular nueva tarjeta física</h5>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h5 class="fw-bold text-dark mb-0">Vincular nueva tarjeta física</h5>
+          <button type="button" class="btn btn-sm btn-link text-decoration-none text-muted" id="btn-simular-rfid">
+            <i class="bi bi-magic me-1"></i> Simular escaneo de prueba
+          </button>
+        </div>
         <p class="text-muted small mb-3">1. Elige qué cerrojo o lector va a escanear &rarr; 2. Pasa la tarjeta &rarr; 3. Asígnala al usuario.</p>
 
         <form id="form-vincular-tarjeta">
@@ -38,11 +43,14 @@ import Footer from '../components/Footer.astro';
               <div class="input-group">
                 <select class="form-select" id="select-lector">
                   <option value="">Lector de Enrolamiento (Mesa)</option>
+                  <option value="Puerta Principal">Puerta Principal (ESP32-01)</option>
                 </select>
-                <button type="button" class="btn btn-secondary fw-bold px-3" id="btn-escuchar">Escuchar</button>
+                <button type="button" class="btn btn-dark fw-bold px-3" id="btn-escuchar">
+                  <i class="bi bi-broadcast me-1"></i> Escuchar
+                </button>
               </div>
-              <small class="text-success d-block mt-1" id="status-escuchar">
-                <i class="bi bi-circle-fill small me-1"></i>En espera de lectura en lector...
+              <small class="text-secondary d-block mt-1" id="status-escuchar">
+                <i class="bi bi-info-circle me-1"></i>Haz clic en "Escuchar" o aproxima una tarjeta a la cerradura.
               </small>
             </div>
 
@@ -50,13 +58,23 @@ import Footer from '../components/Footer.astro';
             <div class="col-md-7">
               <label class="form-label fw-bold small text-dark">Paso 2: Tarjeta detectada &rarr; Asignar</label>
               <div class="input-group">
-                <input type="text" class="form-control font-monospace bg-light" id="input-uid" placeholder="UID: 4A:8F:12:C9" required />
+                <input 
+                  type="text" 
+                  class="form-control font-monospace bg-light" 
+                  id="input-uid" 
+                  placeholder="UID: 4A:8F:12:C9" 
+                  required 
+                />
                 <select class="form-select" id="select-usuario-asignar" required>
                   <option value="">Elegir usuario...</option>
                 </select>
-                <button type="submit" class="btn btn-primary fw-bold px-4" id="btn-vincular-tarjeta">Vincular</button>
+                <button type="submit" class="btn btn-primary fw-bold px-4" id="btn-vincular-tarjeta">
+                  Vincular
+                </button>
               </div>
-              <small class="text-muted d-block mt-1">Tarjeta lista para asociarse a la cuenta seleccionada.</small>
+              <small class="text-muted d-block mt-1" id="helper-vincular">
+                Tarjeta lista para asociarse a la cuenta seleccionada.
+              </small>
             </div>
           </div>
         </form>
@@ -68,7 +86,7 @@ import Footer from '../components/Footer.astro';
       <div class="card-body p-4">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
           <h5 class="fw-bold text-dark mb-0">Usuarios registrados</h5>
-          <div class="d-flex gap-2 style-search">
+          <div class="d-flex gap-2">
             <div class="input-group">
               <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
               <input type="text" class="form-control border-start-0" id="search-users" placeholder="Buscar por nombre, correo..." />
@@ -101,45 +119,49 @@ import Footer from '../components/Footer.astro';
   </main>
 
   <!-- Modal Crear Persona -->
-  <div class="modal fade" id="modalCrearPersona" tabindex="-1" aria-hidden="true">
+  <div class="modal fade" id="modalCrearPersona" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow-lg">
-        <div class="modal-header bg-dark text-white">
-          <h5 class="modal-title fw-bold text-warning">+ Registrar Persona</h5>
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white py-3">
+          <h5 class="modal-title fw-bold"><i class="bi bi-person-plus me-2"></i>Registrar nueva persona</h5>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
-        <div class="modal-body p-4">
-          <div id="persona-modal-alert"></div>
-          <form id="form-crear-persona">
-            <div class="row g-2 mb-3">
+        <form id="form-crear-persona">
+          <div class="modal-body p-4">
+            <div id="persona-modal-alert"></div>
+            <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label fw-bold small">Nombre</label>
-                <input type="text" class="form-control" id="p-nombre" placeholder="José" required />
+                <label class="form-label fw-bold small text-dark">Nombre</label>
+                <input type="text" class="form-control" id="p-nombre" placeholder="Jose" required />
               </div>
               <div class="col-6">
-                <label class="form-label fw-bold small">Apellido</label>
+                <label class="form-label fw-bold small text-dark">Apellido</label>
                 <input type="text" class="form-control" id="p-apellido" placeholder="Ortiz" required />
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold small">Correo corporativo</label>
+              <label class="form-label fw-bold small text-dark">Correo corporativo</label>
               <input type="email" class="form-control" id="p-correo" placeholder="j.ortiz@empresa.pe" required />
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold small">Área / Departamento</label>
-              <input type="text" class="form-control" id="p-area" placeholder="Arquitectura IoT" required />
+            <div class="row g-3">
+              <div class="col-6">
+                <label class="form-label fw-bold small text-dark">Área / Departamento</label>
+                <input type="text" class="form-control" id="p-area" placeholder="Arquitectura IoT" required />
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-bold small text-dark">Rol del sistema</label>
+                <select class="form-select" id="p-rol">
+                  <option value="USUARIO">Operador / Usuario</option>
+                  <option value="ADMIN">Administrador</option>
+                </select>
+              </div>
             </div>
-            <div class="mb-3">
-              <label class="form-label fw-bold small">Rol</label>
-              <select class="form-select" id="p-rol">
-                <option value="USUARIO">USUARIO (Acceso a cerraduras)</option>
-                <option value="OPERADOR">OPERADOR (Gestor)</option>
-                <option value="ADMIN">ADMINISTRADOR (Acceso total)</option>
-              </select>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 fw-bold py-2">Registrar Persona</button>
-          </form>
-        </div>
+          </div>
+          <div class="modal-footer bg-light py-2">
+            <button type="button" class="btn btn-secondary btn-sm fw-bold px-3" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary btn-sm fw-bold px-4">Guardar Persona</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -149,6 +171,8 @@ import Footer from '../components/Footer.astro';
 
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
+  let isListening = false;
+  let webSocketInstance: WebSocket | null = null;
 
   document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
@@ -159,8 +183,8 @@ import Footer from '../components/Footer.astro';
 
     loadUsers();
     loadDevicesForSelect();
-    loadCredentials();
     setupForms();
+    setupListeningState();
     initWebSockets();
   });
 
@@ -191,7 +215,7 @@ import Footer from '../components/Footer.astro';
 
       if (selectUsr) {
         selectUsr.innerHTML = '<option value="">Elegir usuario...</option>' +
-          users.map((u: any) => `<option value="${u.id}">${u.nombre} ${u.apellido}</option>`).join('');
+          users.map((u: any) => `<option value="${u.id}">${u.nombre} ${u.apellido} (${u.departamento || 'General'})</option>`).join('');
       }
 
       if (!tbody) return;
@@ -204,22 +228,21 @@ import Footer from '../components/Footer.astro';
       tbody.innerHTML = users.map((u: any) => {
         const userCred = creds.find((c: any) => c.usuario_id === u.id);
         const rfidCode = userCred ? userCred.uid_hex : '<span class="text-muted">Sin tarjeta</span>';
-        const isRevoked = userCred && userCred.estado === 'REVOCADA';
 
         return `
           <tr>
-            <td class="ps-3 fw-bold">${u.nombre} ${u.apellido}</td>
+            <td class="ps-3 fw-bold text-dark">${u.nombre} ${u.apellido}</td>
             <td class="text-muted">${u.correo}</td>
             <td>${u.departamento || 'General'}</td>
-            <td><code class="bg-light px-2 py-1 text-dark rounded">${rfidCode}</code></td>
+            <td><code class="bg-light border px-2 py-1 text-dark rounded fw-bold">${rfidCode}</code></td>
             <td>
-              <span class="badge ${u.estado === 'ACTIVO' ? 'bg-success' : 'bg-secondary'}">
-                <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i>${u.estado}
+              <span class="badge ${u.estado === 'ACTIVO' ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'} px-2 py-1">
+                <i class="bi bi-circle-fill me-1" style="font-size: 7px;"></i>${u.estado}
               </span>
             </td>
             <td class="text-end pe-3">
               ${userCred ? `
-                <button class="btn btn-outline-secondary btn-sm btn-revoke" data-cred-id="${userCred.id}">
+                <button class="btn btn-outline-secondary btn-sm btn-revoke px-3" data-cred-id="${userCred.id}">
                   Revocar
                 </button>
               ` : '<span class="text-muted small">--</span>'}
@@ -241,7 +264,7 @@ import Footer from '../components/Footer.astro';
   }
 
   async function loadDevicesForSelect() {
-    const selectDev = document.getElementById('select-lector');
+    const selectDev = document.getElementById('select-lector') as HTMLSelectElement;
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/api/v1/devices/my-devices`, {
@@ -249,10 +272,80 @@ import Footer from '../components/Footer.astro';
       });
       if (!res.ok) return;
       const devices = await res.json();
-      if (selectDev) {
-        selectDev.innerHTML = devices.map((d: any) => `<option value="${d.id}">${d.ubicacion} (${d.id})</option>`).join('');
+      if (selectDev && devices.length > 0) {
+        selectDev.innerHTML = `<option value="">Lector de Enrolamiento (Mesa)</option>` + 
+          devices.map((d: any) => `<option value="${d.id}">${d.ubicacion} (${d.id})</option>`).join('');
       }
     } catch (e) {}
+  }
+
+  function setupListeningState() {
+    const btnEscuchar = document.getElementById('btn-escuchar');
+    const statusEscuchar = document.getElementById('status-escuchar');
+    const btnSimular = document.getElementById('btn-simular-rfid');
+
+    btnEscuchar?.addEventListener('click', () => {
+      isListening = !isListening;
+      updateListeningUI();
+    });
+
+    btnSimular?.addEventListener('click', () => {
+      const sampleUids = ['4A8F12C9', 'E200194B', 'B743110C', '5330BA06', 'A4B2C190'];
+      const randomUid = sampleUids[Math.floor(Math.random() * sampleUids.length)];
+      handleDetectedCard(randomUid, 'Simulación de prueba');
+    });
+  }
+
+  function updateListeningUI() {
+    const btnEscuchar = document.getElementById('btn-escuchar');
+    const statusEscuchar = document.getElementById('status-escuchar');
+    const selectLector = (document.getElementById('select-lector') as HTMLSelectElement)?.value || 'Lector de Enrolamiento';
+
+    if (isListening) {
+      if (btnEscuchar) {
+        btnEscuchar.className = 'btn btn-danger fw-bold px-3';
+        btnEscuchar.innerHTML = `<i class="bi bi-stop-circle me-1"></i> Detener`;
+      }
+      if (statusEscuchar) {
+        statusEscuchar.className = 'text-success fw-semibold d-block mt-1';
+        statusEscuchar.innerHTML = `<i class="bi bi-broadcast me-1 text-danger"></i> Escuchando en vivo en "${selectLector}"... Acerca una tarjeta RFID al cerrojo.`;
+      }
+    } else {
+      if (btnEscuchar) {
+        btnEscuchar.className = 'btn btn-dark fw-bold px-3';
+        btnEscuchar.innerHTML = `<i class="bi bi-broadcast me-1"></i> Escuchar`;
+      }
+      if (statusEscuchar) {
+        statusEscuchar.className = 'text-secondary d-block mt-1';
+        statusEscuchar.innerHTML = `<i class="bi bi-info-circle me-1"></i> Haz clic en "Escuchar" o aproxima una tarjeta a la cerradura.`;
+      }
+    }
+  }
+
+  function handleDetectedCard(uidHex: string, source: string = 'WebSocket') {
+    const inputUid = document.getElementById('input-uid') as HTMLInputElement;
+    const helper = document.getElementById('helper-vincular');
+    const statusEscuchar = document.getElementById('status-escuchar');
+
+    if (inputUid) {
+      inputUid.value = uidHex.toUpperCase();
+      inputUid.classList.add('is-valid', 'border-success', 'bg-success-subtle');
+      setTimeout(() => inputUid.classList.remove('bg-success-subtle'), 2000);
+    }
+
+    if (helper) {
+      helper.className = 'text-success fw-bold d-block mt-1';
+      helper.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ¡Tarjeta ${uidHex.toUpperCase()} capturada (${source})! Ahora elige un usuario y presiona Vincular.`;
+    }
+
+    if (statusEscuchar) {
+      statusEscuchar.className = 'text-success fw-bold d-block mt-1';
+      statusEscuchar.innerHTML = `<i class="bi bi-check2-circle me-1"></i> Lectura recibida: <strong>${uidHex.toUpperCase()}</strong>`;
+    }
+
+    // Stop listening after successful scan
+    isListening = false;
+    updateListeningUI();
   }
 
   async function revokeCredential(credId: string) {
@@ -296,7 +389,7 @@ import Footer from '../components/Footer.astro';
         if (!res.ok) throw new Error(data.error || 'Error al crear persona');
 
         alertModal.innerHTML = `<div class="alert alert-success">¡Persona creada con éxito!</div>`;
-        setTimeout(() => window.location.reload(), 1000);
+        setTimeout(() => window.location.reload(), 800);
       } catch (err: any) {
         alertModal.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
       }
@@ -307,6 +400,11 @@ import Footer from '../components/Footer.astro';
       const token = localStorage.getItem('token');
       const uid = (document.getElementById('input-uid') as HTMLInputElement).value.trim();
       const usuarioId = (document.getElementById('select-usuario-asignar') as HTMLSelectElement).value;
+
+      if (!uid || !usuarioId) {
+        alert('Por favor, selecciona una tarjeta y un usuario.');
+        return;
+      }
 
       const expiraEn = new Date();
       expiraEn.setFullYear(expiraEn.getFullYear() + 5);
@@ -320,7 +418,9 @@ import Footer from '../components/Footer.astro';
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al vincular tarjeta');
 
-        alert('¡Tarjeta vinculada exitosamente!');
+        alert(`¡Tarjeta ${uid.toUpperCase()} vinculada exitosamente!`);
+        (document.getElementById('input-uid') as HTMLInputElement).value = '';
+        (document.getElementById('select-usuario-asignar') as HTMLSelectElement).value = '';
         loadUsers();
       } catch (err: any) {
         alert(err.message);
@@ -337,20 +437,32 @@ import Footer from '../components/Footer.astro';
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const host = API_URL.replace('http://', '').replace('https://', '');
-    const ws = new WebSocket(`${wsProto}//${host}/ws?type=web&token=${token}`);
+    try {
+      const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const host = API_URL.replace('http://', '').replace('https://', '');
+      const ws = new WebSocket(`${wsProto}//${host}/ws?type=web&token=${token}`);
+      webSocketInstance = ws;
 
-    ws.onmessage = (event) => {
-      try {
-        const msg = JSON.parse(event.data);
-        if (msg.event === 'card_scanned') {
-          const inputUid = document.getElementById('input-uid') as HTMLInputElement;
-          if (inputUid && msg.payload?.uid_hex) {
-            inputUid.value = msg.payload.uid_hex;
+      ws.onopen = () => {
+        console.log('[WS] Conectado para monitoreo de enrolamiento');
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          
+          // Trigger when device scans any card or access validation occurs
+          if (msg.event === 'card_scanned' && msg.payload?.uid_hex) {
+            handleDetectedCard(msg.payload.uid_hex, `Cerradura ${msg.payload.deviceId || ''}`);
+          } else if (msg.event === 'access_event' && msg.payload?.uid_hex) {
+            handleDetectedCard(msg.payload.uid_hex, `Intento en ${msg.payload.device_id || 'Cerradura'}`);
           }
-        }
-      } catch (e) {}
-    };
+        } catch (e) {}
+      };
+
+      ws.onerror = (err) => console.warn('[WS] Error en socket:', err);
+    } catch (e) {
+      console.warn('[WS] No se pudo establecer conexión WebSocket:', e);
+    }
   }
 </script>
