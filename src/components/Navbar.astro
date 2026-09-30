@@ -2,25 +2,45 @@
 ---
 
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-  <div class="container">
-    <a class="navbar-brand fw-bold" href="/dashboard">
-      <i class="bi bi-shield-lock-fill text-warning me-2"></i>OpenIoTCore
+  <div class="container-fluid px-4">
+    <a class="navbar-brand fw-bold d-flex align-items-center me-4" href="/dashboard">
+      <i class="bi bi-shield-lock-fill text-warning fs-4 me-2"></i>
+      <span>OpenIoTCore</span>
     </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link active" href="/dashboard"><i class="bi bi-speedometer2 me-1"></i> Panel de Control</a>
+
+    <div class="collapse navbar-collapse" id="navbarMain">
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0 fw-medium">
+        <li class="nav-item me-2">
+          <a class="nav-link py-2" id="nav-dashboard" href="/dashboard">
+            <i class="bi bi-grid-1x2-fill me-1"></i> Resumen
+          </a>
+        </li>
+        <li class="nav-item me-2">
+          <a class="nav-link py-2" id="nav-users" href="/users">
+            <i class="bi bi-people-fill me-1"></i> Personas y Tarjetas
+          </a>
+        </li>
+        <li class="nav-item me-2">
+          <a class="nav-link py-2" id="nav-permissions" href="/permissions">
+            <i class="bi bi-clock-history me-1"></i> Reglas de Acceso
+          </a>
+        </li>
+        <li class="nav-item me-2">
+          <a class="nav-link py-2" id="nav-audit" href="/audit">
+            <i class="bi bi-file-earmark-text-fill me-1"></i> Auditoría
+          </a>
         </li>
       </ul>
+
       <div class="d-flex align-items-center gap-3">
-        <span class="navbar-text text-light" id="user-info-text">
+        <span class="navbar-text text-light small" id="user-info-display">
           <i class="bi bi-person-circle me-1"></i> <span id="nav-user-name">Cargando...</span>
         </span>
-        <button class="btn btn-outline-danger btn-sm" id="btn-logout">
-          <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+        <button class="btn btn-outline-light btn-sm px-3" id="btn-logout">
+          <i class="bi bi-box-arrow-right me-1"></i> Salir
         </button>
       </div>
     </div>
@@ -29,10 +49,16 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
+    const path = window.location.pathname;
+    if (path.includes('/dashboard')) document.getElementById('nav-dashboard')?.classList.add('active');
+    if (path.includes('/users')) document.getElementById('nav-users')?.classList.add('active');
+    if (path.includes('/permissions')) document.getElementById('nav-permissions')?.classList.add('active');
+    if (path.includes('/audit')) document.getElementById('nav-audit')?.classList.add('active');
+
     const token = localStorage.getItem('token');
     const usuarioRaw = localStorage.getItem('usuario');
 
-    if (!token && window.location.pathname !== '/' && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
+    if (!token && !['/', '/login', '/register'].includes(path)) {
       window.location.href = '/login';
       return;
     }
@@ -41,17 +67,14 @@
       try {
         const usr = JSON.parse(usuarioRaw);
         const nameEl = document.getElementById('nav-user-name');
-        if (nameEl) nameEl.textContent = `${usr.nombre} ${usr.apellido} (${usr.rol})`;
+        if (nameEl) nameEl.textContent = `${usr.nombre} ${usr.apellido}`;
       } catch (e) {}
     }
 
-    const logoutBtn = document.getElementById('btn-logout');
-    if (logoutBtn) {
-      logoutBtn.addEventListener('click', () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('usuario');
-        window.location.href = '/login';
-      });
-    }
+    document.getElementById('btn-logout')?.addEventListener('click', () => {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.location.href = '/login';
+    });
   });
 </script>

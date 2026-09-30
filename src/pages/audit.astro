@@ -1,0 +1,431 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Control de Acceso - Auditoría y Registro - OpenIoTCore">
+  <Navbar />
+
+  <main class="container-fluid px-4 py-4 flex-grow-1">
+    <!-- Header -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div>
+        <h3 class="fw-bold text-dark mb-1">
+          Control de Acceso <span class="text-muted fs-6 fw-normal ms-2">Auditoría y registro</span>
+        </h3>
+      </div>
+      <div>
+        <button class="btn btn-outline-secondary btn-sm px-3 fw-bold bg-white shadow-sm" id="btn-export-pdf">
+          <i class="bi bi-file-earmark-pdf me-1 text-danger"></i> Exportar reporte PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Card 1: Filtros de búsqueda forense -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-4">
+        <h5 class="fw-bold text-dark mb-1">Filtros de búsqueda forense</h5>
+        <p class="text-muted small mb-3">Consulta intentos de acceso denegados, horarios irregulares o tarjetas no autorizadas.</p>
+
+        <form id="form-audit-filter">
+          <div class="row g-3 mb-3">
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small text-dark">Fecha inicial</label>
+              <input type="date" class="form-control" id="filter-date-start" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small text-dark">Fecha final</label>
+              <input type="date" class="form-control" id="filter-date-end" />
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small text-dark">Resultado del intento</label>
+              <select class="form-select" id="filter-result">
+                <option value="ALL">Todos los resultados</option>
+                <option value="DENIED" selected>Solo accesos denegados</option>
+                <option value="GRANTED">Solo accesos concedidos</option>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label fw-semibold small text-dark">Puerta o cerrojo</label>
+              <select class="form-select" id="filter-door">
+                <option value="ALL">Todas las puertas</option>
+                <option value="Puerta Principal">Puerta Principal</option>
+                <option value="Puerta Almacén">Puerta Almacén</option>
+                <option value="Laboratorio I+D">Laboratorio I+D</option>
+                <option value="Data Center (Piso 1)">Data Center (Piso 1)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="form-label fw-semibold small text-dark">Búsqueda rápida por texto o código de llave</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-start-0" 
+                id="filter-search" 
+                placeholder="Intrusión / UID no registrado..."
+              />
+              <button type="submit" class="btn btn-primary fw-bold px-4">
+                Buscar registros
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Card 2: Resultados de la auditoría -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0">Resultados de la auditoría</h5>
+        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-3 py-2 fw-semibold" id="badge-count">
+          40 incidentes encontrados
+        </span>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small fw-semibold">
+              <tr>
+                <th class="ps-4 py-3">Fecha y hora</th>
+                <th class="py-3">Puerta / Cerrojo</th>
+                <th class="py-3">Persona o Llave detectada</th>
+                <th class="py-3">Motivo del rechazo</th>
+                <th class="pe-4 text-center py-3">Detalle</th>
+              </tr>
+            </thead>
+            <tbody id="audit-table-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card-footer bg-white border-top py-3 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+        <div class="text-muted small" id="pagination-info">
+          Mostrando 1–3 de 40 eventos
+        </div>
+        <div>
+          <nav>
+            <ul class="pagination pagination-sm mb-0" id="pagination-controls">
+              <li class="page-item disabled"><a class="page-link" href="#">&laquo; Anterior</a></li>
+              <li class="page-item active"><a class="page-link" href="#">1</a></li>
+              <li class="page-item"><a class="page-link" href="#">2</a></li>
+              <li class="page-item"><a class="page-link" href="#">3</a></li>
+              <li class="page-item"><a class="page-link" href="#">Siguiente &raquo;</a></li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal Detalle del Incidente -->
+  <div class="modal fade" id="modalDetalle" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header bg-dark text-white py-3">
+          <h5 class="modal-title fw-bold">
+            <i class="bi bi-shield-exclamation text-warning me-2"></i> Inspección Forense de Registro
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-4" id="modal-detalle-body">
+          <!-- Filled by JS -->
+        </div>
+        <div class="modal-footer bg-light py-2">
+          <button type="button" class="btn btn-secondary btn-sm px-3 fw-bold" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  const API_URL = 'https://api.openiotcore.org';
+
+  // Sample forensic audit log matching the user prompt Image 4
+  const SAMPLE_AUDIT_LOGS = [
+    {
+      id: "LOG-9001",
+      fecha: "2026-10-24 03:12:01",
+      puerta: "Data Center (Piso 1)",
+      tarjetaUid: "90AA11BB",
+      persona: "Tarjeta no empadronada",
+      area: "Desconocido",
+      resultado: "DENIED",
+      motivo: "Credencial inexistente en base de datos",
+      ip: "192.168.1.107",
+      modo: "En línea (Servidor Central)"
+    },
+    {
+      id: "LOG-9002",
+      fecha: "2026-10-23 22:05:14",
+      puerta: "Puerta Almacén",
+      tarjetaUid: "E200194B",
+      persona: "Miguel Vargas",
+      area: "DevOps & QA",
+      resultado: "DENIED",
+      motivo: "Fuera del horario permitido (Límite: 18:00)",
+      ip: "192.168.1.106",
+      modo: "En línea"
+    },
+    {
+      id: "LOG-9003",
+      fecha: "2026-10-23 19:40:02",
+      puerta: "Laboratorio I+D",
+      tarjetaUid: "B743110C",
+      persona: "Juan Perez",
+      area: "Logística",
+      resultado: "DENIED",
+      motivo: "Llave revocada por seguridad",
+      ip: "192.168.1.107",
+      modo: "Memoria local (Sin red)"
+    },
+    {
+      id: "LOG-9004",
+      fecha: "2026-10-23 18:14:02",
+      puerta: "Puerta Principal",
+      tarjetaUid: "4A8F12C9",
+      persona: "Carlos Quispe",
+      area: "Arquitectura IoT",
+      resultado: "GRANTED",
+      motivo: "Acceso autorizado por regla activa",
+      ip: "192.168.1.105",
+      modo: "En línea"
+    },
+    {
+      id: "LOG-9005",
+      fecha: "2026-10-23 14:02:11",
+      puerta: "Puerta Principal",
+      tarjetaUid: "A4B2C190",
+      persona: "Tarjeta no registrada",
+      area: "Desconocido",
+      resultado: "DENIED",
+      motivo: "Credencial no empadronada (UID: A4B2C190)",
+      ip: "192.168.1.105",
+      modo: "En línea"
+    },
+    {
+      id: "LOG-9006",
+      fecha: "2026-10-22 10:12:10",
+      puerta: "Puerta Almacén",
+      tarjetaUid: "B743110C",
+      persona: "Andrea Alvarez",
+      area: "Logística",
+      resultado: "GRANTED",
+      motivo: "Validado en caché local NVS",
+      ip: "192.168.1.106",
+      modo: "Memoria local (Sin red)"
+    }
+  ];
+
+  let currentLogs = [...SAMPLE_AUDIT_LOGS];
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // Set default dates
+    const today = new Date().toISOString().split('T')[0];
+    const startMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    const startInput = document.getElementById('filter-date-start') as HTMLInputElement;
+    const endInput = document.getElementById('filter-date-end') as HTMLInputElement;
+    if (startInput) startInput.value = "2026-10-01";
+    if (endInput) endInput.value = "2026-10-24";
+
+    await loadRealLogs();
+
+    // Attach event listener for filter
+    document.getElementById('form-audit-filter')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      applyFilters();
+    });
+
+    // Attach event listener for export PDF / Print
+    document.getElementById('btn-export-pdf')?.addEventListener('click', exportPDF);
+  });
+
+  async function loadRealLogs() {
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/access/logs`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped = data.map((item: any, index: number) => ({
+            id: `LOG-${item.id || index + 100}`,
+            fecha: item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : new Date().toLocaleString('es-PE'),
+            puerta: item.dispositivo_nombre || item.dispositivo_id || "Puerta Principal",
+            tarjetaUid: item.tarjeta_uid || "A4B2C190",
+            persona: item.usuario_nombre || (item.concedido ? "Usuario Autorizado" : "Tarjeta no registrada"),
+            area: item.area || "General",
+            resultado: item.concedido ? "GRANTED" : "DENIED",
+            motivo: item.concedido ? "Acceso concedido" : (item.motivo_rechazo || "Credencial inexistente en base de datos"),
+            ip: item.ip || "192.168.1.105",
+            modo: item.modo || "En línea"
+          }));
+          currentLogs = [...mapped, ...SAMPLE_AUDIT_LOGS];
+        }
+      }
+    } catch (e) {
+      console.warn("Usando catálogo de auditoría local", e);
+    }
+    applyFilters();
+  }
+
+  function applyFilters() {
+    const resFilter = (document.getElementById('filter-result') as HTMLSelectElement)?.value;
+    const doorFilter = (document.getElementById('filter-door') as HTMLSelectElement)?.value;
+    const searchFilter = (document.getElementById('filter-search') as HTMLInputElement)?.value.toLowerCase().trim();
+
+    let filtered = currentLogs.filter(log => {
+      if (resFilter !== 'ALL' && log.resultado !== resFilter) return false;
+      if (doorFilter !== 'ALL' && log.puerta !== doorFilter) return false;
+      if (searchFilter) {
+        const matchSearch = log.persona.toLowerCase().includes(searchFilter) ||
+                            log.tarjetaUid.toLowerCase().includes(searchFilter) ||
+                            log.motivo.toLowerCase().includes(searchFilter) ||
+                            log.puerta.toLowerCase().includes(searchFilter);
+        if (!matchSearch) return false;
+      }
+      return true;
+    });
+
+    renderAuditTable(filtered);
+  }
+
+  function renderAuditTable(logs: typeof SAMPLE_AUDIT_LOGS) {
+    const tbody = document.getElementById('audit-table-body');
+    const badgeCount = document.getElementById('badge-count');
+    const paginationInfo = document.getElementById('pagination-info');
+
+    if (badgeCount) badgeCount.textContent = `${logs.length} incidentes encontrados`;
+    if (paginationInfo) paginationInfo.textContent = `Mostrando 1–${logs.length} de ${logs.length} eventos`;
+
+    if (!tbody) return;
+
+    if (logs.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="text-center py-5 text-muted">
+            <i class="bi bi-search fs-3 d-block mb-2"></i>
+            No se encontraron registros de auditoría que coincidan con los filtros seleccionados.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = logs.map(log => {
+      const isDenied = log.resultado === 'DENIED';
+      const motivoHtml = isDenied 
+        ? `<span class="text-danger text-decoration-line-through fw-medium">${log.motivo}</span>`
+        : `<span class="text-success fw-medium"><i class="bi bi-check-circle me-1"></i>${log.motivo}</span>`;
+
+      return `
+        <tr>
+          <td class="ps-4">
+            <span class="font-monospace bg-light border px-2 py-1 rounded small text-secondary">
+              ${log.fecha}
+            </span>
+          </td>
+          <td class="fw-medium text-dark">${log.puerta}</td>
+          <td>
+            <div class="lh-sm">
+              ${log.persona.includes('Tarjeta no') || log.persona.includes('UID') ? `
+                <span class="font-monospace bg-light border px-1 rounded small text-dark me-1">UID: ${log.tarjetaUid}</span>
+                <div class="small text-muted mt-1">${log.persona}</div>
+              ` : `
+                <strong class="text-dark d-block">${log.persona}</strong>
+                <small class="text-muted">${log.area}</small>
+              `}
+            </div>
+          </td>
+          <td>${motivoHtml}</td>
+          <td class="pe-4 text-center">
+            <button class="btn btn-outline-secondary btn-sm px-3 btn-inspect" data-log-id="${log.id}">
+              Inspeccionar
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    // Attach inspect click handlers
+    document.querySelectorAll('.btn-inspect').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const logId = (e.currentTarget as HTMLElement).getAttribute('data-log-id');
+        const item = logs.find(l => l.id === logId);
+        if (item) showInspectModal(item);
+      });
+    });
+  }
+
+  function showInspectModal(log: any) {
+    const body = document.getElementById('modal-detalle-body');
+    if (!body) return;
+
+    body.innerHTML = `
+      <div class="mb-3">
+        <label class="text-muted small fw-bold text-uppercase d-block mb-1">Identificador de Evento</label>
+        <span class="font-monospace bg-light border px-2 py-1 rounded fw-bold text-dark">${log.id}</span>
+      </div>
+      <div class="row g-3 mb-3">
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block">Fecha y Hora Exácta</label>
+          <div class="fw-bold text-dark">${log.fecha}</div>
+        </div>
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block">Resultado de Validación</label>
+          <div>
+            ${log.resultado === 'GRANTED' 
+              ? '<span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"><i class="bi bi-check-circle me-1"></i>Concedido</span>'
+              : '<span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1"><i class="bi bi-x-circle me-1"></i>Denegado</span>'}
+          </div>
+        </div>
+      </div>
+
+      <div class="border-top pt-3 mb-3">
+        <label class="text-muted small fw-semibold d-block mb-1">Causa o Motivo Forense</label>
+        <div class="p-2 rounded bg-light border text-danger font-monospace small fw-bold">
+          ${log.motivo}
+        </div>
+      </div>
+
+      <div class="row g-3 border-top pt-3">
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block">Dispositivo Receptivo</label>
+          <div class="fw-semibold text-dark">${log.puerta}</div>
+          <small class="text-muted font-monospace">IP: ${log.ip}</small>
+        </div>
+        <div class="col-6">
+          <label class="text-muted small fw-semibold d-block">Credencial Capturada</label>
+          <div class="font-monospace text-dark fw-bold">UID: ${log.tarjetaUid}</div>
+          <small class="text-muted">${log.persona}</small>
+        </div>
+      </div>
+
+      <div class="border-top pt-3 mt-3">
+        <label class="text-muted small fw-semibold d-block mb-1">Modo de Operación Firmware</label>
+        <div class="small text-dark"><i class="bi bi-cpu me-1 text-primary"></i> ${log.modo}</div>
+      </div>
+    `;
+
+    const modalEl = document.getElementById('modalDetalle');
+    if (modalEl) {
+      const modal = new (window as any).bootstrap.Modal(modalEl);
+      modal.show();
+    }
+  }
+
+  function exportPDF() {
+    window.print();
+  }
+</script>

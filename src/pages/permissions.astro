@@ -1,0 +1,287 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Reglas de Acceso y Horarios - OpenIoTCore">
+  <Navbar />
+
+  <main class="container-fluid px-4 py-4 flex-grow-1">
+    <div id="perm-alert"></div>
+
+    <!-- Card Principal: Asignar regla de acceso y horarios -->
+    <div class="card shadow-sm border-0 mb-4">
+      <div class="card-body p-4">
+        <h5 class="fw-bold text-dark mb-1">Asignar regla de acceso y horarios</h5>
+        <p class="text-muted small mb-4">Configura en qué puertas, días y horarios específicos tendrá autorización esta persona.</p>
+
+        <form id="form-permission">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-dark">Persona autorizada</label>
+              <select class="form-select" id="select-persona" required>
+                <option value="">Cargando personas...</option>
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-bold small text-dark">Puerta o área</label>
+              <select class="form-select" id="select-puerta" required>
+                <option value="">Cargando puertas...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Días de la semana permitidos -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-dark d-block">Días de la semana permitidos</label>
+            <div class="d-flex flex-wrap gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="1" id="day-lun" checked />
+                <label class="form-check-label small fw-semibold" for="day-lun">Lun</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="2" id="day-mar" checked />
+                <label class="form-check-label small fw-semibold" for="day-mar">Mar</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="3" id="day-mie" checked />
+                <label class="form-check-label small fw-semibold" for="day-mie">Mié</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="4" id="day-jue" checked />
+                <label class="form-check-label small fw-semibold" for="day-jue">Jue</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="5" id="day-vie" checked />
+                <label class="form-check-label small fw-semibold" for="day-vie">Vie</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="6" id="day-sab" checked />
+                <label class="form-check-label small fw-semibold" for="day-sab">Sáb</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="7" id="day-dom" />
+                <label class="form-check-label small fw-semibold" for="day-dom">Dom</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Horarios y Vigencia -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-dark">Hora de inicio</label>
+              <input type="time" class="form-control" id="hora-inicio" value="08:00" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-dark">Hora de salida</label>
+              <input type="time" class="form-control" id="hora-fin" value="18:00" required />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-bold small text-dark">Vigencia hasta</label>
+              <input type="date" class="form-control" id="fecha-limite" value="2026-12-31" required />
+            </div>
+          </div>
+
+          <!-- Estado de la autorización -->
+          <div class="mb-4">
+            <label class="form-label fw-bold small text-dark d-block">Estado de la autorización</label>
+            <div class="d-flex gap-4">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="perm-status" id="status-enabled" value="true" checked />
+                <label class="form-check-label small fw-bold text-dark" for="status-enabled">Habilitado</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="perm-status" id="status-paused" value="false" />
+                <label class="form-check-label small text-muted" for="status-paused">Pausado temporalmente</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Botones de Acción -->
+          <div class="d-flex justify-content-end gap-3 pt-3 border-top">
+            <button type="reset" class="btn btn-outline-secondary px-4 fw-bold">Cancelar</button>
+            <button type="submit" class="btn btn-primary px-4 fw-bold" id="btn-save-perm">
+              <i class="bi bi-arrow-repeat me-1"></i> Guardar y sincronizar con la puerta
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Reglas Configuradas Actuales -->
+    <div class="card shadow-sm border-0">
+      <div class="card-header bg-white py-3">
+        <h5 class="fw-bold text-dark mb-0">Reglas y permisos activos</h5>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="bg-light text-muted small">
+              <tr>
+                <th class="ps-4">Persona</th>
+                <th>Puerta</th>
+                <th>Horario</th>
+                <th>Días</th>
+                <th>Vigencia</th>
+                <th>Estado</th>
+                <th class="text-end pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="permissions-table-body">
+              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando reglas...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <Footer />
+</Layout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    loadOptions();
+    loadPermissions();
+    setupForm();
+  });
+
+  async function loadOptions() {
+    const token = localStorage.getItem('token');
+    const selectUsr = document.getElementById('select-persona') as HTMLSelectElement;
+    const selectDoor = document.getElementById('select-puerta') as HTMLSelectElement;
+
+    try {
+      const [uRes, dRes] = await Promise.all([
+        fetch(`${API_URL}/api/v1/users`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_URL}/api/v1/devices/my-devices`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+
+      if (uRes.ok && selectUsr) {
+        const users = await uRes.json();
+        selectUsr.innerHTML = '<option value="">Selecciona una persona...</option>' +
+          users.map((u: any) => `<option value="${u.id}">${u.nombre} ${u.apellido}</option>`).join('');
+      }
+
+      if (dRes.ok && selectDoor) {
+        const doors = await dRes.json();
+        selectDoor.innerHTML = '<option value="">Selecciona una puerta...</option>' +
+          doors.map((d: any) => `<option value="${d.id}">${d.ubicacion} (${d.zona_piso || 'Entrada'})</option>`).join('');
+      }
+    } catch (e) {}
+  }
+
+  async function loadPermissions() {
+    const token = localStorage.getItem('token');
+    const tbody = document.getElementById('permissions-table-body');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/permissions`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al cargar permisos');
+      const perms = await res.json();
+
+      if (!tbody) return;
+
+      if (perms.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No hay reglas de acceso configuradas.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = perms.map((p: any) => `
+        <tr>
+          <td class="ps-4 fw-bold">${p.nombre} ${p.apellido}</td>
+          <td>${p.ubicacion}</td>
+          <td class="small">${p.hora_inicio} - ${p.hora_fin}</td>
+          <td class="small text-muted">Lun - Vie</td>
+          <td class="small text-muted">${new Date(p.fecha_limite).toLocaleDateString()}</td>
+          <td>
+            <span class="badge ${p.activo ? 'bg-success' : 'bg-secondary'}">
+              ${p.activo ? 'Habilitado' : 'Pausado'}
+            </span>
+          </td>
+          <td class="text-end pe-4">
+            <button class="btn btn-outline-danger btn-sm btn-delete-perm" data-perm-id="${p.id}">
+              Eliminar
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+      document.querySelectorAll('.btn-delete-perm').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const id = (e.currentTarget as HTMLButtonElement).getAttribute('data-perm-id');
+          if (id) deletePermission(id);
+        });
+      });
+
+    } catch (e) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Error al cargar reglas.</td></tr>`;
+    }
+  }
+
+  async function deletePermission(id: string) {
+    if (!confirm('¿Seguro que deseas eliminar esta regla?')) return;
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch(`${API_URL}/api/v1/permissions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error('Error al eliminar');
+      loadPermissions();
+    } catch (e: any) {
+      alert(e.message);
+    }
+  }
+
+  function setupForm() {
+    const form = document.getElementById('form-permission') as HTMLFormElement;
+    const alertEl = document.getElementById('perm-alert') as HTMLDivElement;
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem('token');
+
+      const selectedDays: number[] = [];
+      [1,2,3,4,5,6,7].forEach((d) => {
+        const chk = document.getElementById(`day-${['lun','mar','mie','jue','vie','sab','dom'][d-1]}`) as HTMLInputElement;
+        if (chk && chk.checked) selectedDays.push(d);
+      });
+
+      const payload = {
+        usuario_id: (document.getElementById('select-persona') as HTMLSelectElement).value,
+        dispositivo_id: (document.getElementById('select-puerta') as HTMLSelectElement).value,
+        hora_inicio: (document.getElementById('hora-inicio') as HTMLInputElement).value + ':00',
+        hora_fin: (document.getElementById('hora-fin') as HTMLInputElement).value + ':00',
+        dias_semana: selectedDays,
+        fecha_limite: (document.getElementById('fecha-limite') as HTMLInputElement).value + 'T23:59:59Z'
+      };
+
+      try {
+        const res = await fetch(`${API_URL}/api/v1/permissions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Error al guardar regla');
+
+        alertEl.innerHTML = `<div class="alert alert-success">¡Regla de acceso guardada y sincronizada con la puerta!</div>`;
+        loadPermissions();
+        form.reset();
+      } catch (err: any) {
+        alertEl.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+      }
+    });
+  }
+</script>
