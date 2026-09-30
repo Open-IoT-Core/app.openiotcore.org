@@ -1,0 +1,107 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Iniciar Sesión - OpenIoTCore">
+  <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
+    <div class="card shadow-lg border-0 style-card style-width" style="max-width: 420px; width: 100%;">
+      <div class="card-header bg-dark text-white text-center py-4">
+        <h3 class="fw-bold mb-0 text-warning">
+          <i class="bi bi-shield-lock-fill me-2"></i>OpenIoTCore
+        </h3>
+        <small class="text-white-50">Acceso a Cerraduras Inteligentes</small>
+      </div>
+      <div class="card-body p-4">
+        <div id="alert-container"></div>
+        <form id="login-form">
+          <div class="mb-3">
+            <label for="correo" class="form-label fw-bold">Correo Electrónico</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill"></i></span>
+              <input type="email" class="form-control" id="correo" placeholder="usuario@empresa.com" required />
+            </div>
+          </div>
+          <div class="mb-4">
+            <label for="clave" class="form-label fw-bold">Contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-key-fill"></i></span>
+              <input type="password" class="form-control" id="clave" placeholder="••••••••" required />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-warning w-100 fw-bold text-dark py-2" id="btn-submit">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
+          </button>
+        </form>
+      </div>
+      <div class="card-footer bg-light text-center py-3">
+        <span class="text-muted">¿No tienes una cuenta?</span>
+        <a href="/register" class="fw-bold text-dark text-decoration-none ms-1">Regístrate aquí</a>
+      </div>
+    </div>
+  </div>
+  <Footer />
+</Layout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Si ya está autenticado, redirigir al panel
+    if (localStorage.getItem('token')) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    const alertContainer = document.getElementById('alert-container') as HTMLDivElement;
+    const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertContainer.innerHTML = '';
+
+      const correo = (document.getElementById('correo') as HTMLInputElement).value.trim();
+      const clave = (document.getElementById('clave') as HTMLInputElement).value;
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Ingresando...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/v1/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo, clave })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Credenciales inválidas');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+
+        alertContainer.innerHTML = `
+          <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> ¡Inicio de sesión exitoso! Redirigiendo...
+          </div>
+        `;
+
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+
+      } catch (err: any) {
+        alertContainer.innerHTML = `
+          <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> ${err.message || 'Error al conectar con la API'}
+          </div>
+        `;
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión';
+      }
+    });
+  });
+</script>

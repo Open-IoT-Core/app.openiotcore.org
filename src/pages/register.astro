@@ -1,0 +1,130 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Registro de Usuario - OpenIoTCore">
+  <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
+    <div class="card shadow-lg border-0" style="max-width: 500px; width: 100%;">
+      <div class="card-header bg-dark text-white text-center py-4">
+        <h3 class="fw-bold mb-0 text-warning">
+          <i class="bi bi-person-plus-fill me-2"></i>Crear Cuenta
+        </h3>
+        <small class="text-white-50">OpenIoTCore - Cerraduras Inteligentes</small>
+      </div>
+      <div class="card-body p-4">
+        <div id="alert-container"></div>
+        <form id="register-form">
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="nombre" class="form-label fw-bold">Nombre</label>
+              <input type="text" class="form-control" id="nombre" placeholder="Juan" required />
+            </div>
+            <div class="col-md-6">
+              <label for="apellido" class="form-label fw-bold">Apellido</label>
+              <input type="text" class="form-control" id="apellido" placeholder="Pérez" required />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="correo" class="form-label fw-bold">Correo Electrónico</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill"></i></span>
+              <input type="email" class="form-control" id="correo" placeholder="juan.perez@empresa.com" required />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="departamento" class="form-label fw-bold">Departamento / Ubicación</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-building"></i></span>
+              <input type="text" class="form-control" id="departamento" placeholder="Operaciones / Casa / Oficina" required />
+            </div>
+          </div>
+
+          <div class="mb-4">
+            <label for="clave" class="form-label fw-bold">Contraseña</label>
+            <div class="input-group">
+              <span class="input-group-text bg-light"><i class="bi bi-key-fill"></i></span>
+              <input type="password" class="form-control" id="clave" placeholder="Mínimo 6 caracteres" minlength="6" required />
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-warning w-100 fw-bold text-dark py-2" id="btn-submit">
+            <i class="bi bi-check-circle-fill me-1"></i> Registrarse e Iniciar Sesión
+          </button>
+        </form>
+      </div>
+      <div class="card-footer bg-light text-center py-3">
+        <span class="text-muted">¿Ya tienes una cuenta?</span>
+        <a href="/login" class="fw-bold text-dark text-decoration-none ms-1">Inicia sesión</a>
+      </div>
+    </div>
+  </div>
+  <Footer />
+</Layout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('token')) {
+      window.location.href = '/dashboard';
+      return;
+    }
+
+    const form = document.getElementById('register-form') as HTMLFormElement;
+    const alertContainer = document.getElementById('alert-container') as HTMLDivElement;
+    const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      alertContainer.innerHTML = '';
+
+      const nombre = (document.getElementById('nombre') as HTMLInputElement).value.trim();
+      const apellido = (document.getElementById('apellido') as HTMLInputElement).value.trim();
+      const correo = (document.getElementById('correo') as HTMLInputElement).value.trim();
+      const departamento = (document.getElementById('departamento') as HTMLInputElement).value.trim();
+      const clave = (document.getElementById('clave') as HTMLInputElement).value;
+
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Registrando...';
+
+      try {
+        const res = await fetch(`${API_URL}/api/v1/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre, apellido, correo, departamento, clave, rol: 'USUARIO' })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al registrar la cuenta');
+        }
+
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('usuario', JSON.stringify(data.usuario));
+
+        alertContainer.innerHTML = `
+          <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> ¡Cuenta registrada con éxito! Redirigiendo...
+          </div>
+        `;
+
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+
+      } catch (err: any) {
+        alertContainer.innerHTML = `
+          <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i> ${err.message || 'Error al conectar con la API'}
+          </div>
+        `;
+        btnSubmit.disabled = false;
+        btnSubmit.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Registrarse e Iniciar Sesión';
+      }
+    });
+  });
+</script>

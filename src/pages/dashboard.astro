@@ -1,0 +1,478 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Panel de Control - OpenIoTCore">
+  <Navbar />
+
+  <main class="container my-4 flex-grow-1">
+    <!-- Banner Principal -->
+    <div class="row mb-4">
+      <div class="col-12">
+        <div class="p-4 bg-dark text-white rounded-3 shadow-sm d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+          <div>
+            <h2 class="fw-bold mb-1 text-warning">
+              <i class="bi bi-door-open-fill me-2"></i>Mis Cerraduras Inteligentes
+            </h2>
+            <p class="mb-0 text-white-50">Gestiona y controla el acceso a tus cerraduras IoT en tiempo real.</p>
+          </div>
+          <div>
+            <button class="btn btn-warning fw-bold btn-lg" data-bs-toggle="modal" data-bs-target="#modalVincularCerradura">
+              <i class="bi bi-plus-circle-fill me-2"></i>Vincular Nueva Cerradura
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="dashboard-alert"></div>
+
+    <!-- Sección de Mis Cerraduras -->
+    <div class="row mb-4">
+      <div class="col-12 mb-3">
+        <h4 class="fw-bold text-dark d-flex align-items-center">
+          <i class="bi bi-key-fill text-warning me-2"></i>Cerraduras Vinculadas
+        </h4>
+      </div>
+      <div class="col-12">
+        <div class="row g-4" id="devices-container">
+          <div class="col-12 text-center py-5">
+            <div class="spinner-border text-warning" role="status"></div>
+            <p class="mt-2 text-muted">Cargando tus cerraduras...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registro de Actividad en Tiempo Real (WebSockets & Audit) -->
+    <div class="row">
+      <div class="col-12">
+        <div class="card shadow-sm border-0">
+          <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+            <h5 class="fw-bold mb-0 text-warning">
+              <i class="bi bi-activity me-2"></i>Actividad en Tiempo Real
+            </h5>
+            <span class="badge bg-success d-flex align-items-center gap-1" id="ws-badge">
+              <i class="bi bi-wifi"></i> WebSocket Conectado
+            </span>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Fecha / Hora</th>
+                    <th>Cerradura</th>
+                    <th>Evento</th>
+                    <th>Detalle / Usuario</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                  <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">Esperando actividad en tiempo real...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal para Vincular Cerradura -->
+  <div class="modal fade" id="modalVincularCerradura" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header bg-dark text-white">
+          <h5 class="modal-title fw-bold text-warning" id="modalLabel">
+            <i class="bi bi-key-fill me-2"></i>Vincular Nueva Cerradura
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body p-4">
+          <div id="modal-alert"></div>
+
+          <!-- Selector de Tipo de Dispositivo (Únicamente Cerradura) -->
+          <div class="mb-3">
+            <label class="form-label fw-bold">Tipo de Dispositivo</label>
+            <select class="form-select bg-light" disabled>
+              <option selected value="CERRADURA">🔒 Cerradura Inteligente RFID/IoT (Única disponible)</option>
+            </select>
+            <div class="form-text">Por el momento, el único dispositivo soportado es la Cerradura Inteligente.</div>
+          </div>
+
+          <!-- Pestañas de Vinculación -->
+          <ul class="nav nav-pills nav-justified mb-3" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active fw-bold" id="pills-code-tab" data-bs-toggle="pill" data-bs-target="#pills-code" type="button" role="tab">
+                <i class="bi bi-123 me-1"></i> Por Código (8 dígitos)
+              </button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link fw-bold" id="pills-manual-tab" data-bs-toggle="pill" data-bs-target="#pills-manual" type="button" role="tab">
+                <i class="bi bi-pencil-square me-1"></i> Manual / MAC
+              </button>
+            </li>
+          </ul>
+
+          <div class="tab-content" id="pills-tabContent">
+            <!-- Opción 1: Vincular por Código de 8 Dígitos -->
+            <div class="tab-pane fade show active" id="pills-code" role="tabpanel">
+              <form id="form-claim-code">
+                <div class="mb-3">
+                  <label for="pairing-code-input" class="form-label fw-bold">Código de Vinculación de la Pantalla</label>
+                  <input type="text" class="form-control form-control-lg text-center fw-bold text-uppercase" id="pairing-code-input" placeholder="Ej: AEIO-4283" maxlength="9" required />
+                  <div class="form-text">Introduce el código de 8 dígitos que aparece en la pantalla OLED de la cerradura. Vigencia: 1 hora.</div>
+                </div>
+                <button type="submit" class="btn btn-warning w-100 fw-bold py-2" id="btn-claim-submit">
+                  <i class="bi bi-link-45deg me-1"></i> Vincular por Código
+                </button>
+              </form>
+            </div>
+
+            <!-- Opción 2: Registro Manual -->
+            <div class="tab-pane fade" id="pills-manual" role="tabpanel">
+              <form id="form-register-manual">
+                <div class="mb-3">
+                  <label for="device-id-input" class="form-label fw-bold">ID del Dispositivo</label>
+                  <input type="text" class="form-control" id="device-id-input" placeholder="Ej: ESP32-PUERTA-PRINCIPAL" required />
+                </div>
+                <div class="mb-3">
+                  <label for="ubicacion-input" class="form-label fw-bold">Ubicación / Nombre</label>
+                  <input type="text" class="form-control" id="ubicacion-input" placeholder="Ej: Puerta Principal Casa" required />
+                </div>
+                <div class="row g-2 mb-3">
+                  <div class="col-6">
+                    <label for="piso-input" class="form-label fw-bold">Zona / Piso</label>
+                    <input type="text" class="form-control" id="piso-input" placeholder="Piso 1" required />
+                  </div>
+                  <div class="col-6">
+                    <label for="ip-input" class="form-label fw-bold">Dirección IP</label>
+                    <input type="text" class="form-control" id="ip-input" placeholder="192.168.1.94" required />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="mac-input" class="form-label fw-bold">Dirección MAC</label>
+                  <input type="text" class="form-control" id="mac-input" placeholder="AA:BB:CC:DD:EE:FF" required />
+                </div>
+                <button type="submit" class="btn btn-dark w-100 fw-bold py-2" id="btn-manual-submit">
+                  <i class="bi bi-save me-1"></i> Registrar Manualmente
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Footer />
+</Layout>
+
+<script>
+  const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
+
+    loadDevices();
+    initWebSockets();
+    setupForms();
+  });
+
+  async function loadDevices() {
+    const container = document.getElementById('devices-container');
+    const token = localStorage.getItem('token');
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/devices/my-devices`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!res.ok) throw new Error('Error al obtener cerraduras');
+
+      const devices = await res.json();
+
+      if (!container) return;
+
+      if (devices.length === 0) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="card text-center py-5 border-dashed">
+              <div class="card-body">
+                <i class="bi bi-key text-muted display-4 mb-3 d-block"></i>
+                <h5 class="fw-bold">No tienes cerraduras vinculadas</h5>
+                <p class="text-muted">Ingresa el código de 8 dígitos de la pantalla de tu ESP32 para vincularla a tu cuenta.</p>
+                <button class="btn btn-warning fw-bold" data-bs-toggle="modal" data-bs-target="#modalVincularCerradura">
+                  <i class="bi bi-plus-circle-fill me-1"></i> Vincular Mi Primera Cerradura
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = devices.map((dev: any) => `
+        <div class="col-md-6 col-lg-4">
+          <div class="card h-100 shadow-sm border-0">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+              <h6 class="fw-bold mb-0 text-truncate" title="${dev.ubicacion}">
+                <i class="bi bi-door-closed-fill text-warning me-2"></i>${dev.ubicacion}
+              </h6>
+              <span class="badge ${dev.estado_efectivo === 'ONLINE' ? 'bg-success' : 'bg-secondary'}">
+                <i class="bi bi-circle-fill me-1" style="font-size: 8px;"></i>${dev.estado_efectivo}
+              </span>
+            </div>
+            <div class="card-body">
+              <p class="card-text small text-muted mb-2">
+                <strong>ID Dispositivo:</strong> <code class="text-dark">${dev.id}</code>
+              </p>
+              <p class="card-text small text-muted mb-2">
+                <strong>Zona:</strong> ${dev.zona_piso} | <strong>IP:</strong> ${dev.direccion_ip}
+              </p>
+              <p class="card-text small text-muted mb-3">
+                <strong>Última actividad:</strong> ${dev.ultimo_heartbeat ? new Date(dev.ultimo_heartbeat).toLocaleString() : 'Sin registro'}
+              </p>
+              <button class="btn btn-warning w-100 fw-bold py-2 btn-unlock" data-device-id="${dev.id}">
+                <i class="bi bi-unlock-fill me-1"></i> Desbloquear Puerta
+              </button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+
+      // Adjuntar eventos a los botones de Desbloqueo
+      document.querySelectorAll('.btn-unlock').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLButtonElement;
+          const devId = target.getAttribute('data-device-id');
+          if (devId) unlockDevice(devId, target);
+        });
+      });
+
+    } catch (err: any) {
+      if (container) {
+        container.innerHTML = `
+          <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> Error cargando cerraduras: ${err.message}
+            </div>
+          </div>
+        `;
+      }
+    }
+  }
+
+  async function unlockDevice(deviceId: string, btn: HTMLButtonElement) {
+    const token = localStorage.getItem('token');
+    const originalContent = btn.innerHTML;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Abriendo...';
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/devices/${deviceId}/unlock`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al enviar orden');
+
+      btn.classList.remove('btn-warning');
+      btn.classList.add('btn-success');
+      btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> ¡Puerta Desbloqueada!';
+
+      setTimeout(() => {
+        btn.classList.remove('btn-success');
+        btn.classList.add('btn-warning');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+      }, 4000);
+
+    } catch (err: any) {
+      alert(`Error al desbloquear: ${err.message}`);
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
+    }
+  }
+
+  function setupForms() {
+    const formClaim = document.getElementById('form-claim-code') as HTMLFormElement;
+    const formManual = document.getElementById('form-register-manual') as HTMLFormElement;
+    const modalAlert = document.getElementById('modal-alert') as HTMLDivElement;
+
+    if (formClaim) {
+      formClaim.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        modalAlert.innerHTML = '';
+        const pairingCode = (document.getElementById('pairing-code-input') as HTMLInputElement).value.trim();
+        const token = localStorage.getItem('token');
+
+        try {
+          const res = await fetch(`${API_URL}/api/v1/devices/claim-by-code`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ pairing_code: pairingCode })
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al vincular por código');
+
+          modalAlert.innerHTML = `
+            <div class="alert alert-success d-flex align-items-center mb-3">
+              <i class="bi bi-check-circle-fill me-2"></i> ¡Cerradura vinculada con éxito!
+            </div>
+          `;
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+
+        } catch (err: any) {
+          modalAlert.innerHTML = `
+            <div class="alert alert-danger d-flex align-items-center mb-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> ${err.message}
+            </div>
+          `;
+        }
+      });
+    }
+
+    if (formManual) {
+      formManual.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        modalAlert.innerHTML = '';
+        const token = localStorage.getItem('token');
+
+        const payload = {
+          id: (document.getElementById('device-id-input') as HTMLInputElement).value.trim(),
+          ubicacion: (document.getElementById('ubicacion-input') as HTMLInputElement).value.trim(),
+          zona_piso: (document.getElementById('piso-input') as HTMLInputElement).value.trim(),
+          direccion_ip: (document.getElementById('ip-input') as HTMLInputElement).value.trim(),
+          mac_address: (document.getElementById('mac-input') as HTMLInputElement).value.trim()
+        };
+
+        try {
+          const res = await fetch(`${API_URL}/api/v1/devices/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(payload)
+          });
+
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Error al registrar cerradura');
+
+          modalAlert.innerHTML = `
+            <div class="alert alert-success d-flex align-items-center mb-3">
+              <i class="bi bi-check-circle-fill me-2"></i> ¡Cerradura registrada con éxito!
+            </div>
+          `;
+
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+
+        } catch (err: any) {
+          modalAlert.innerHTML = `
+            <div class="alert alert-danger d-flex align-items-center mb-3">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i> ${err.message}
+            </div>
+          `;
+        }
+      });
+    }
+  }
+
+  function initWebSockets() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = API_URL.replace('http://', '').replace('https://', '');
+    const wsUrl = `${wsProtocol}//${wsHost}/ws?type=web&token=${token}`;
+
+    const badge = document.getElementById('ws-badge');
+
+    try {
+      const ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        if (badge) {
+          badge.className = 'badge bg-success d-flex align-items-center gap-1';
+          badge.innerHTML = '<i class="bi bi-wifi"></i> WebSocket Conectado';
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.event === 'access_event') {
+            appendLogToTable(msg.payload);
+          } else if (msg.event === 'device_status' || msg.event === 'device_registered') {
+            loadDevices();
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = () => {
+        if (badge) {
+          badge.className = 'badge bg-secondary d-flex align-items-center gap-1';
+          badge.innerHTML = '<i class="bi bi-wifi-off"></i> WebSocket Desconectado';
+        }
+        setTimeout(initWebSockets, 5000);
+      };
+
+    } catch (e) {
+      if (badge) {
+        badge.className = 'badge bg-secondary d-flex align-items-center gap-1';
+        badge.innerHTML = '<i class="bi bi-wifi-off"></i> Error Conexión WS';
+      }
+    }
+  }
+
+  function appendLogToTable(log: any) {
+    const tbody = document.getElementById('logs-table-body');
+    if (!tbody) return;
+
+    if (tbody.children.length === 1 && tbody.children[0].textContent?.includes('Esperando')) {
+      tbody.innerHTML = '';
+    }
+
+    const tr = document.createElement('tr');
+    const isPermitido = log.evento === 'PERMITIDO';
+
+    tr.innerHTML = `
+      <td class="small text-muted">${new Date(log.timestamp || Date.now()).toLocaleTimeString()}</td>
+      <td><span class="fw-bold">${log.device_id}</span></td>
+      <td>
+        <span class="badge ${isPermitido ? 'bg-success' : 'bg-danger'}">
+          ${log.evento}
+        </span>
+      </td>
+      <td class="small">${log.nombre ? `${log.nombre} ${log.apellido}` : `UID: ${log.uid_hex}`}</td>
+      <td class="small text-muted">${log.razon}</td>
+    `;
+
+    tbody.insertBefore(tr, tbody.firstChild);
+  }
+</script>
