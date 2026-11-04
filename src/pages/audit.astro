@@ -4,25 +4,29 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Auditoría Forense · OpenIoTCore">
+<Layout title="Auditoría · OpenIoTCore">
   <Navbar />
 
   <main class="container-fluid px-4 py-4 flex-grow-1" style="max-width: 1440px;">
     <!-- Header -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
       <div>
-        <h6 class="mb-1 fw-semibold text-light" style="font-size: 15px;">Registro de auditoría forense</h6>
-        <p class="text-secondary small mb-0" style="font-size: 12.5px;">Trazabilidad completa de intentos de acceso, lecturas RFID no autorizadas y anomalías.</p>
+        <h6 class="mb-1 fw-semibold text-light" style="font-size: 15px;">Registro de auditoría de accesos</h6>
+        <p class="text-secondary small mb-0" style="font-size: 13px;">Trazabilidad en tiempo real de intentos de paso, lecturas RFID y anomalías del sistema.</p>
       </div>
-      <div>
-        <button class="btn-secondary-dark d-inline-flex align-items-center gap-2" id="btn-export-pdf">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Exportar informe</span>
+      <div class="d-flex align-items-center gap-2">
+        <button class="btn-secondary-dark d-inline-flex align-items-center gap-2" id="btn-export-excel" title="Descargar reporte en formato Microsoft Excel">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-emerald);"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="17"/><line x1="16" y1="13" x2="8" y2="17"/></svg>
+          <span>Exportar Excel</span>
+        </button>
+        <button class="btn-secondary-dark d-inline-flex align-items-center gap-2" id="btn-export-csv" title="Descargar archivo delimitado por comas">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-cyan);"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Exportar CSV</span>
         </button>
       </div>
     </div>
 
-    <!-- Card 1: Filtros de búsqueda forense -->
+    <!-- Card 1: Criterios de filtrado -->
     <div class="card-technical mb-4 p-4">
       <div class="d-flex align-items-center gap-2 mb-3">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-secondary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
@@ -43,18 +47,14 @@ import Footer from '../components/Footer.astro';
             <label class="form-label text-secondary small fw-medium mb-1">Resultado</label>
             <select class="form-select form-select-dark" id="filter-result">
               <option value="ALL">Todos los eventos</option>
-              <option value="DENIED" selected>Solo accesos denegados</option>
-              <option value="GRANTED">Solo accesos concedidos</option>
+              <option value="DENIED">Solo accesos denegados</option>
+              <option value="GRANTED">Solo accesos autorizados</option>
             </select>
           </div>
           <div class="col-md-3">
             <label class="form-label text-secondary small fw-medium mb-1">Punto de acceso</label>
             <select class="form-select form-select-dark" id="filter-door">
               <option value="ALL">Todas las puertas</option>
-              <option value="Puerta Principal">Puerta Principal</option>
-              <option value="Puerta Almacén">Puerta Almacén</option>
-              <option value="Laboratorio I+D">Laboratorio I+D</option>
-              <option value="Data Center (Piso 1)">Data Center (Piso 1)</option>
             </select>
           </div>
         </div>
@@ -66,7 +66,7 @@ import Footer from '../components/Footer.astro';
               type="text" 
               class="form-control form-control-dark font-mono" 
               id="filter-search" 
-              placeholder="Buscar por UID (ej: 4A8F12C9), nombre o anomalía..."
+              placeholder="Buscar por UID (ej: 4A8F12C9), nombre o causa..."
             />
             <button type="submit" class="btn-primary-dark d-flex align-items-center gap-2">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -82,10 +82,10 @@ import Footer from '../components/Footer.astro';
       <div class="card-header-technical d-flex justify-content-between align-items-center">
         <div>
           <h6 class="mb-0 fw-semibold text-light" style="font-size: 14.5px;">Registros de paso auditados</h6>
-          <span class="text-muted small" style="font-size: 12px;">Eventos inmutables capturados por los microcontroladores de acceso.</span>
+          <span class="text-secondary small" style="font-size: 12.5px;">Eventos inmutables capturados por los microcontroladores de acceso.</span>
         </div>
         <span class="uid-badge font-mono" id="badge-count" style="font-size: 11px;">
-          Sincronizando registros...
+          Consultando registros...
         </span>
       </div>
       <div class="table-responsive">
@@ -100,19 +100,23 @@ import Footer from '../components/Footer.astro';
             </tr>
           </thead>
           <tbody id="audit-table-body">
-            <!-- Dynamically populated -->
+            <tr>
+              <td colspan="5" class="text-center py-5 text-muted font-mono" style="font-size: 13px;">
+                Cargando eventos desde el servidor...
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
       <div class="card-header-technical d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2" style="border-top: 1px solid var(--border-hairline); border-bottom: 0;">
-        <div class="text-muted small font-mono" id="pagination-info" style="font-size: 12px;">
-          Consultando base de eventos...
+        <div class="text-secondary small font-mono" id="pagination-info" style="font-size: 12.5px;">
+          Sincronizando con base de datos...
         </div>
       </div>
     </div>
   </main>
 
-  <!-- Modal Detalle del Incidente -->
+  <!-- Modal Detalle del Registro -->
   <div class="modal fade" id="modalDetalle" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width: 520px;">
       <div class="modal-content modal-content-dark">
@@ -121,7 +125,7 @@ import Footer from '../components/Footer.astro';
             <div class="brand-icon-box" style="width: 24px; height: 24px;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
             </div>
-            <h6 class="modal-title fw-semibold text-light mb-0" style="font-size: 14.5px;">Inspección forense de registro</h6>
+            <h6 class="modal-title fw-semibold text-light mb-0" style="font-size: 14.5px;">Inspección de registro de acceso</h6>
           </div>
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
@@ -141,89 +145,31 @@ import Footer from '../components/Footer.astro';
 <script>
   const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
 
-  const SAMPLE_AUDIT_LOGS = [
-    {
-      id: "LOG-9001",
-      fecha: "2026-10-24 03:12:01",
-      puerta: "Data Center (Piso 1)",
-      tarjetaUid: "90AA11BB",
-      persona: "Tarjeta no empadronada",
-      area: "No identificado",
-      resultado: "DENIED",
-      motivo: "Credencial inexistente en base de datos",
-      ip: "192.168.1.107",
-      modo: "En línea (Servidor Central)"
-    },
-    {
-      id: "LOG-9002",
-      fecha: "2026-10-23 22:05:14",
-      puerta: "Puerta Almacén",
-      tarjetaUid: "E200194B",
-      persona: "Miguel Vargas",
-      area: "DevOps & QA",
-      resultado: "DENIED",
-      motivo: "Fuera de ventana autorizada (Límite: 18:00)",
-      ip: "192.168.1.106",
-      modo: "En línea"
-    },
-    {
-      id: "LOG-9003",
-      fecha: "2026-10-23 19:40:02",
-      puerta: "Laboratorio I+D",
-      tarjetaUid: "B743110C",
-      persona: "Juan Pérez",
-      area: "Logística",
-      resultado: "DENIED",
-      motivo: "Credencial revocada por seguridad",
-      ip: "192.168.1.107",
-      modo: "Caché NVS local (Sin red)"
-    },
-    {
-      id: "LOG-9004",
-      fecha: "2026-10-23 18:14:02",
-      puerta: "Puerta Principal",
-      tarjetaUid: "4A8F12C9",
-      persona: "Carlos Quispe",
-      area: "Arquitectura IoT",
-      resultado: "GRANTED",
-      motivo: "Acceso autorizado por regla activa",
-      ip: "192.168.1.105",
-      modo: "En línea"
-    },
-    {
-      id: "LOG-9005",
-      fecha: "2026-10-23 14:02:11",
-      puerta: "Puerta Principal",
-      tarjetaUid: "A4B2C190",
-      persona: "Tarjeta no registrada",
-      area: "Desconocido",
-      resultado: "DENIED",
-      motivo: "Credencial no empadronada (UID: A4B2C190)",
-      ip: "192.168.1.105",
-      modo: "En línea"
-    },
-    {
-      id: "LOG-9006",
-      fecha: "2026-10-22 10:12:10",
-      puerta: "Puerta Almacén",
-      tarjetaUid: "B743110C",
-      persona: "Andrea Álvarez",
-      area: "Logística",
-      resultado: "GRANTED",
-      motivo: "Validado en caché local NVS",
-      ip: "192.168.1.106",
-      modo: "Caché NVS local (Sin red)"
-    }
-  ];
+  interface AuditLogItem {
+    id: string;
+    fecha: string;
+    timestampRaw: string;
+    puerta: string;
+    tarjetaUid: string;
+    persona: string;
+    area: string;
+    resultado: string;
+    motivo: string;
+    ip: string;
+    modo: string;
+  }
 
-  let currentLogs = [...SAMPLE_AUDIT_LOGS];
+  let realLogs: AuditLogItem[] = [];
+  let filteredLogs: AuditLogItem[] = [];
 
   document.addEventListener('DOMContentLoaded', async () => {
-    const startInput = document.getElementById('filter-date-start') as HTMLInputElement;
-    const endInput = document.getElementById('filter-date-end') as HTMLInputElement;
-    if (startInput) startInput.value = "2026-10-01";
-    if (endInput) endInput.value = "2026-10-24";
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login';
+      return;
+    }
 
+    await loadDoorOptions();
     await loadRealLogs();
 
     document.getElementById('form-audit-filter')?.addEventListener('submit', (e) => {
@@ -231,50 +177,89 @@ import Footer from '../components/Footer.astro';
       applyFilters();
     });
 
-    document.getElementById('btn-export-pdf')?.addEventListener('click', exportPDF);
+    document.getElementById('btn-export-csv')?.addEventListener('click', exportCSV);
+    document.getElementById('btn-export-excel')?.addEventListener('click', exportExcel);
   });
+
+  async function loadDoorOptions() {
+    const token = localStorage.getItem('token');
+    const selectDoor = document.getElementById('filter-door') as HTMLSelectElement;
+    if (!selectDoor) return;
+
+    try {
+      const res = await fetch(`${API_URL}/api/v1/devices/my-devices`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const devices = await res.json();
+        selectDoor.innerHTML = '<option value="ALL">Todas las puertas</option>' +
+          devices.map((d: any) => `<option value="${d.ubicacion}">${d.ubicacion}</option>`).join('');
+      }
+    } catch (e) {}
+  }
 
   async function loadRealLogs() {
     const token = localStorage.getItem('token');
     try {
-      const res = await fetch(`${API_URL}/api/v1/logs`, {
+      const res = await fetch(`${API_URL}/api/v1/logs?limite=200`, {
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
+
       if (res.ok) {
         const data = await res.json();
         const rawItems = data.resultados || (Array.isArray(data) ? data : []);
-        if (rawItems.length > 0) {
-          const mapped = rawItems.map((item: any, index: number) => {
-            const isGranted = item.evento === 'PERMITIDO';
-            const personName = item.nombre ? `${item.nombre} ${item.apellido || ''}` : (isGranted ? "Personal Autorizado" : "Tarjeta no empadronada");
-            return {
-              id: `LOG-${item.id || index + 100}`,
-              fecha: item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : new Date().toLocaleString('es-PE'),
-              puerta: item.ubicacion || item.dispositivo_id || "Puerta Principal",
-              tarjetaUid: item.uid_leido || "A4B2C190",
-              persona: personName,
-              area: item.departamento || "General",
-              resultado: isGranted ? "GRANTED" : "DENIED",
-              motivo: item.razon || (isGranted ? "Acceso autorizado" : "Acceso denegado"),
-              ip: item.ip || "192.168.1.105",
-              modo: item.evento && item.evento.includes('OFFLINE') ? "Caché NVS local" : "En línea"
-            };
-          });
-          currentLogs = [...mapped, ...SAMPLE_AUDIT_LOGS];
-        }
+
+        realLogs = rawItems.map((item: any, index: number) => {
+          const isGranted = item.evento === 'PERMITIDO' || item.evento === 'OFFLINE_PERMITIDO';
+          const personName = item.nombre ? `${item.nombre} ${item.apellido || ''}`.trim() : 'Tarjeta no registrada';
+          const isOffline = item.evento && item.evento.includes('OFFLINE');
+
+          return {
+            id: `LOG-${item.id || index + 100}`,
+            fecha: item.timestamp ? new Date(item.timestamp).toLocaleString('es-PE') : '--',
+            timestampRaw: item.timestamp || '',
+            puerta: item.ubicacion || item.dispositivo_id || 'Puerta Principal',
+            tarjetaUid: item.uid_leido || 'NO_UID',
+            persona: personName,
+            area: item.departamento || 'General',
+            resultado: isGranted ? 'GRANTED' : 'DENIED',
+            motivo: item.razon || (isGranted ? 'Acceso autorizado' : 'Acceso denegado'),
+            ip: item.direccion_ip || item.ip || '192.168.1.xxx',
+            modo: isOffline ? 'Caché NVS local' : 'Enlace en línea'
+          };
+        });
+      } else {
+        realLogs = [];
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Error al consultar registros de la API:', e);
+      realLogs = [];
+    }
+
     applyFilters();
   }
 
   function applyFilters() {
-    const resFilter = (document.getElementById('filter-result') as HTMLSelectElement)?.value;
-    const doorFilter = (document.getElementById('filter-door') as HTMLSelectElement)?.value;
-    const searchFilter = (document.getElementById('filter-search') as HTMLInputElement)?.value.toLowerCase().trim();
+    const resFilter = (document.getElementById('filter-result') as HTMLSelectElement)?.value || 'ALL';
+    const doorFilter = (document.getElementById('filter-door') as HTMLSelectElement)?.value || 'ALL';
+    const searchFilter = (document.getElementById('filter-search') as HTMLInputElement)?.value.toLowerCase().trim() || '';
+    const dateStart = (document.getElementById('filter-date-start') as HTMLInputElement)?.value;
+    const dateEnd = (document.getElementById('filter-date-end') as HTMLInputElement)?.value;
 
-    let filtered = currentLogs.filter(log => {
+    filteredLogs = realLogs.filter(log => {
       if (resFilter !== 'ALL' && log.resultado !== resFilter) return false;
       if (doorFilter !== 'ALL' && log.puerta !== doorFilter) return false;
+
+      if (dateStart && log.timestampRaw) {
+        const logDate = log.timestampRaw.substring(0, 10);
+        if (logDate < dateStart) return false;
+      }
+
+      if (dateEnd && log.timestampRaw) {
+        const logDate = log.timestampRaw.substring(0, 10);
+        if (logDate > dateEnd) return false;
+      }
+
       if (searchFilter) {
         const matchSearch = log.persona.toLowerCase().includes(searchFilter) ||
                             log.tarjetaUid.toLowerCase().includes(searchFilter) ||
@@ -285,16 +270,16 @@ import Footer from '../components/Footer.astro';
       return true;
     });
 
-    renderAuditTable(filtered);
+    renderAuditTable(filteredLogs);
   }
 
-  function renderAuditTable(logs: typeof SAMPLE_AUDIT_LOGS) {
+  function renderAuditTable(logs: AuditLogItem[]) {
     const tbody = document.getElementById('audit-table-body');
     const badgeCount = document.getElementById('badge-count');
     const paginationInfo = document.getElementById('pagination-info');
 
     if (badgeCount) badgeCount.textContent = `${logs.length} eventos registrados`;
-    if (paginationInfo) paginationInfo.textContent = `Mostrando ${logs.length} de ${logs.length} registros`;
+    if (paginationInfo) paginationInfo.textContent = `Mostrando ${logs.length} de ${logs.length} eventos registrados`;
 
     if (!tbody) return;
 
@@ -302,7 +287,7 @@ import Footer from '../components/Footer.astro';
       tbody.innerHTML = `
         <tr>
           <td colspan="5" class="text-center py-5 text-muted font-mono" style="font-size: 13px;">
-            No se hallaron registros que coincidan con los criterios establecidos.
+            No hay registros de auditoría disponibles con los criterios seleccionados.
           </td>
         </tr>
       `;
@@ -317,7 +302,7 @@ import Footer from '../components/Footer.astro';
 
       return `
         <tr>
-          <td class="ps-4 font-mono text-muted" style="font-size: 12.5px;">${log.fecha}</td>
+          <td class="ps-4 font-mono text-secondary" style="font-size: 12.5px;">${log.fecha}</td>
           <td><span class="text-light fw-medium">${log.puerta}</span></td>
           <td>
             <div class="d-flex flex-column">
@@ -344,33 +329,33 @@ import Footer from '../components/Footer.astro';
     });
   }
 
-  function showInspectModal(log: any) {
+  function showInspectModal(log: AuditLogItem) {
     const body = document.getElementById('modal-detalle-body');
     if (!body) return;
 
     body.innerHTML = `
       <div class="mb-3 d-flex justify-content-between align-items-center">
-        <span class="text-muted small font-mono" style="font-size: 11.5px;">ID DE REGISTRO</span>
+        <span class="text-secondary small font-mono" style="font-size: 11.5px;">ID DE REGISTRO</span>
         <span class="uid-badge font-mono">${log.id}</span>
       </div>
 
       <div class="row g-3 mb-3">
         <div class="col-6">
-          <label class="text-muted small font-mono d-block mb-1" style="font-size: 11px;">FECHA Y HORA</label>
+          <label class="text-secondary small font-mono d-block mb-1" style="font-size: 11px;">FECHA Y HORA</label>
           <div class="font-mono text-light" style="font-size: 13px;">${log.fecha}</div>
         </div>
         <div class="col-6">
-          <label class="text-muted small font-mono d-block mb-1" style="font-size: 11px;">DICTAMEN</label>
+          <label class="text-secondary small font-mono d-block mb-1" style="font-size: 11px;">DICTAMEN</label>
           <div>
             ${log.resultado === 'GRANTED' 
-              ? '<span class="status-pill status-granted"><span class="metric-status-dot dot-online"></span>Concedido</span>'
+              ? '<span class="status-pill status-granted"><span class="metric-status-dot dot-online"></span>Autorizado</span>'
               : '<span class="status-pill status-denied"><span class="metric-status-dot dot-crimson"></span>Denegado</span>'}
           </div>
         </div>
       </div>
 
       <div class="p-3 rounded mb-3" style="background: var(--bg-surface); border: 1px solid var(--border-hairline);">
-        <label class="text-muted small font-mono d-block mb-1" style="font-size: 11px;">DIAGNÓSTICO DEL CONTROLADOR</label>
+        <label class="text-secondary small font-mono d-block mb-1" style="font-size: 11px;">DIAGNÓSTICO DEL CONTROLADOR</label>
         <div class="font-mono small ${log.resultado === 'DENIED' ? 'text-danger' : 'text-success'}">
           ${log.motivo}
         </div>
@@ -378,19 +363,19 @@ import Footer from '../components/Footer.astro';
 
       <div class="row g-3 mb-3">
         <div class="col-6">
-          <label class="text-muted small font-mono d-block mb-1" style="font-size: 11px;">DISPOSITIVO RECEPTOR</label>
+          <label class="text-secondary small font-mono d-block mb-1" style="font-size: 11px;">DISPOSITIVO RECEPTOR</label>
           <div class="text-light fw-medium small">${log.puerta}</div>
           <span class="text-muted font-mono" style="font-size: 11px;">IP: ${log.ip}</span>
         </div>
         <div class="col-6">
-          <label class="text-muted small font-mono d-block mb-1" style="font-size: 11px;">CREDENCIAL DETECTADA</label>
+          <label class="text-secondary small font-mono d-block mb-1" style="font-size: 11px;">CREDENCIAL DETECTADA</label>
           <div class="font-mono text-light small">UID: ${log.tarjetaUid}</div>
           <span class="text-secondary small">${log.persona}</span>
         </div>
       </div>
 
       <div class="pt-2" style="border-top: 1px solid var(--border-hairline);">
-        <span class="text-muted small font-mono" style="font-size: 11px;">MODO DE VALIDACIÓN: ${log.modo}</span>
+        <span class="text-muted small font-mono" style="font-size: 11.5px;">CANAL DE VALIDACIÓN: ${log.modo}</span>
       </div>
     `;
 
@@ -401,7 +386,105 @@ import Footer from '../components/Footer.astro';
     }
   }
 
-  function exportPDF() {
-    window.print();
+  function exportCSV() {
+    if (filteredLogs.length === 0) {
+      alert('No hay registros para exportar con los filtros actuales.');
+      return;
+    }
+
+    const headers = ['ID', 'Fecha y Hora', 'Punto de Acceso', 'Credencial / Persona', 'UID', 'Resultado', 'Diagnóstico / Motivo', 'Canal'];
+    const escapeCsv = (val: string) => `"${(val || '').replace(/"/g, '""')}"`;
+
+    const rows = filteredLogs.map(l => [
+      escapeCsv(l.id),
+      escapeCsv(l.fecha),
+      escapeCsv(l.puerta),
+      escapeCsv(l.persona),
+      escapeCsv(l.tarjetaUid),
+      escapeCsv(l.resultado === 'GRANTED' ? 'AUTORIZADO' : 'DENEGADO'),
+      escapeCsv(l.motivo),
+      escapeCsv(l.modo)
+    ].join(','));
+
+    // UTF-8 BOM (\uFEFF) para que Excel abra los acentos en español sin problemas
+    const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria_openiotcore_${new Date().toISOString().substring(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function exportExcel() {
+    if (filteredLogs.length === 0) {
+      alert('No hay registros para exportar con los filtros actuales.');
+      return;
+    }
+
+    // Formato Excel Spreadsheet XML nativo para Microsoft Excel
+    const rowsXml = filteredLogs.map(l => `
+      <Row>
+        <Cell><Data ss:Type="String">${escapeXml(l.id)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.fecha)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.puerta)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.persona)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.tarjetaUid)}</Data></Cell>
+        <Cell><Data ss:Type="String">${l.resultado === 'GRANTED' ? 'AUTORIZADO' : 'DENEGADO'}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.motivo)}</Data></Cell>
+        <Cell><Data ss:Type="String">${escapeXml(l.modo)}</Data></Cell>
+      </Row>
+    `).join('');
+
+    const excelXml = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header">
+   <Font ss:Bold="1" ss:Color="#FFFFFF"/>
+   <Interior ss:Color="#0F172A" ss:Pattern="Solid"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Auditoría OpenIoTCore">
+  <Table>
+   <Row ss:StyleID="Header">
+    <Cell><Data ss:Type="String">ID de Registro</Data></Cell>
+    <Cell><Data ss:Type="String">Fecha y Hora</Data></Cell>
+    <Cell><Data ss:Type="String">Punto de Acceso</Data></Cell>
+    <Cell><Data ss:Type="String">Persona / Credencial</Data></Cell>
+    <Cell><Data ss:Type="String">UID RFID</Data></Cell>
+    <Cell><Data ss:Type="String">Resultado</Data></Cell>
+    <Cell><Data ss:Type="String">Diagnóstico / Motivo</Data></Cell>
+    <Cell><Data ss:Type="String">Canal de Validación</Data></Cell>
+   </Row>
+   ${rowsXml}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([excelXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `auditoria_openiotcore_${new Date().toISOString().substring(0, 10)}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function escapeXml(unsafe: string): string {
+    return (unsafe || '').replace(/[<>&'"]/g, (c) => {
+      switch (c) {
+        case '<': return '&lt;';
+        case '>': return '&gt;';
+        case '&': return '&amp;';
+        case '\'': return '&apos;';
+        case '"': return '&quot;';
+        default: return c;
+      }
+    });
   }
 </script>
