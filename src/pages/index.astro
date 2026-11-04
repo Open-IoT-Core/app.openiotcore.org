@@ -2,12 +2,22 @@
 import Layout from '../layouts/Layout.astro';
 ---
 
-<Layout title="OpenIoTCore - Redirigiendo...">
+<Layout title="Iniciando Consola · OpenIoTCore">
   <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 text-center py-5">
-    <div class="spinner-border text-warning mb-3" role="status" style="width: 3rem; height: 3rem;">
-      <span class="visually-hidden">Cargando...</span>
+    <div class="brand-icon-box mb-3" style="width: 48px; height: 48px;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="2"/>
+        <path d="M7 7h.01"/>
+        <path d="M17 7h.01"/>
+        <path d="M7 17h.01"/>
+        <path d="M17 17h.01"/>
+      </svg>
     </div>
-    <h5 class="fw-bold text-dark">Cargando OpenIoTCore...</h5>
+    <h6 class="fw-semibold text-light mb-1" style="font-size: 15px;">OpenIoTCore</h6>
+    <div class="d-flex align-items-center gap-2 mt-2">
+      <span class="metric-status-dot dot-online"></span>
+      <span class="text-secondary small font-mono" style="font-size: 12px;">Sincronizando sesión segura...</span>
+    </div>
   </div>
 </Layout>
 

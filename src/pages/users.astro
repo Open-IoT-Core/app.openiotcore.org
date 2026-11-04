@@ -4,244 +4,176 @@ import Navbar from "../components/Navbar.astro";
 import Footer from "../components/Footer.astro";
 ---
 
-<Layout title="Control de Acceso - Personas y Llaves - OpenIoTCore">
+<Layout title="Personal y Tarjetas RFID · OpenIoTCore">
   <Navbar />
 
-  <main class="container-fluid px-4 py-4 flex-grow-1">
+  <main class="container-fluid px-4 py-4 flex-grow-1" style="max-width: 1440px;">
     <!-- Header -->
-    <div
-      class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
-    >
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
       <div>
-        <h3 class="fw-bold text-dark mb-1">
-          Control de Acceso <span class="text-muted fs-6 fw-normal ms-2"
-            >Gestión de personas y llaves</span
-          >
-        </h3>
+        <h6 class="mb-1 fw-semibold text-light" style="font-size: 15px;">Gestión de personal y credenciales RFID</h6>
+        <p class="text-secondary small mb-0" style="font-size: 12.5px;">Asignación de tarjetas físicas de proximidad a usuarios autorizados.</p>
       </div>
       <div>
-        <button
-          class="btn btn-primary fw-bold px-3"
-          data-bs-toggle="modal"
-          data-bs-target="#modalCrearPersona"
-        >
-          + Registrar persona
+        <button class="btn-primary-dark d-inline-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalCrearPersona">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Registrar nueva persona</span>
         </button>
       </div>
     </div>
 
     <div id="users-alert"></div>
 
-    <!-- Card 1: Vincular nueva tarjeta física -->
-    <div class="card shadow-sm border-0 mb-4">
-      <div class="card-body p-4">
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <h5 class="fw-bold text-dark mb-0">Vincular nueva tarjeta física</h5>
+    <!-- Card 1: Terminal de Enrolamiento RFID -->
+    <div class="card-technical mb-4 p-4">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="d-flex align-items-center gap-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-secondary"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          <h6 class="fw-semibold text-light mb-0" style="font-size: 14px;">Terminal de enrolamiento rápido</h6>
         </div>
-        <p class="text-muted small mb-3">
-          1. Elige qué cerrojo o lector va a escanear &rarr; 2. Pasa la tarjeta
-          &rarr; 3. Asígnala al usuario.
-        </p>
+        <button type="button" class="btn-secondary-dark font-mono" id="btn-simular-rfid" style="font-size: 11px; padding: 4px 10px;">
+          Simular lectura de prueba
+        </button>
+      </div>
+      <p class="text-secondary small mb-3" style="font-size: 12px;">
+        1. Selecciona el lector receptor &rarr; 2. Acerca la tarjeta RFID al cerrojo &rarr; 3. Asigna la tarjeta al colaborador.
+      </p>
 
-        <form id="form-vincular-tarjeta">
-          <div class="row g-3 align-items-end">
-            <!-- Paso 1 -->
-            <div class="col-md-5">
-              <label class="form-label fw-bold small text-dark"
-                >Paso 1: Cerrojo o lector receptor</label
-              >
-              <div class="input-group">
-                <select class="form-select" id="select-lector">
-                  <option disabled selected value=""
-                    >Seleccione una opción</option
-                  >
-                </select>
-                <button
-                  type="button"
-                  class="btn btn-dark fw-bold px-3"
-                  id="btn-escuchar"
-                >
-                  <i class="bi bi-broadcast me-1"></i> Escuchar
-                </button>
-              </div>
-              <small class="text-secondary d-block mt-1" id="status-escuchar">
-                <i class="bi bi-info-circle me-1"></i>Haz clic en "Escuchar" o
-                aproxima una tarjeta a la cerradura.
-              </small>
+      <form id="form-vincular-tarjeta">
+        <div class="row g-3 align-items-end">
+          <!-- Paso 1 -->
+          <div class="col-md-5">
+            <label class="form-label text-secondary small fw-medium mb-1">Paso 1: Lector o cerrojo receptor</label>
+            <div class="input-group">
+              <select class="form-select form-select-dark" id="select-lector">
+                <option disabled selected value="">Seleccionar lector ESP32...</option>
+              </select>
+              <button type="button" class="btn-secondary-dark d-flex align-items-center gap-2" id="btn-escuchar">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+                <span>Escuchar</span>
+              </button>
             </div>
-
-            <!-- Paso 2 -->
-            <div class="col-md-7">
-              <label class="form-label fw-bold small text-dark"
-                >Paso 2: Tarjeta detectada &rarr; Asignar</label
-              >
-              <div class="input-group">
-                <input
-                  type="text"
-                  class="form-control font-monospace bg-light"
-                  id="input-uid"
-                  placeholder="UID: 4A:8F:12:C9"
-                  required
-                />
-                <select
-                  class="form-select"
-                  id="select-usuario-asignar"
-                  required
-                >
-                  <option value="">Elegir usuario...</option>
-                </select>
-                <button
-                  type="submit"
-                  class="btn btn-primary fw-bold px-4"
-                  id="btn-vincular-tarjeta"
-                >
-                  Vincular
-                </button>
-              </div>
-              <small class="text-muted d-block mt-1" id="helper-vincular">
-                Tarjeta lista para asociarse a la cuenta seleccionada.
-              </small>
+            <div class="text-muted small mt-1 font-mono" id="status-escuchar" style="font-size: 11.5px;">
+              Pulsa "Escuchar" o aproxima una tarjeta a cualquier cerradura vinculada.
             </div>
           </div>
-        </form>
-      </div>
+
+          <!-- Paso 2 -->
+          <div class="col-md-7">
+            <label class="form-label text-secondary small fw-medium mb-1">Paso 2: Tarjeta capturada &rarr; Asignar</label>
+            <div class="input-group">
+              <input 
+                type="text" 
+                class="form-control form-control-dark font-mono text-uppercase" 
+                id="input-uid" 
+                placeholder="UID: 4A:8F:12:C9" 
+                required 
+                style="letter-spacing: 0.08em; font-size: 13.5px;"
+              />
+              <select class="form-select form-select-dark" id="select-usuario-asignar" required>
+                <option value="">Elegir usuario...</option>
+              </select>
+              <button type="submit" class="btn-primary-dark d-flex align-items-center gap-2" id="btn-vincular-tarjeta">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Vincular</span>
+              </button>
+            </div>
+            <div class="text-muted small mt-1 font-mono" id="helper-vincular" style="font-size: 11.5px;">
+              Esperando lectura de tarjeta...
+            </div>
+          </div>
+        </div>
+      </form>
     </div>
 
-    <!-- Card 2: Usuarios registrados -->
-    <div class="card shadow-sm border-0">
-      <div class="card-body p-4">
-        <div
-          class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4"
-        >
-          <h5 class="fw-bold text-dark mb-0">Usuarios registrados</h5>
-          <div class="d-flex gap-2">
-            <div class="input-group">
-              <span class="input-group-text bg-white border-end-0"
-                ><i class="bi bi-search text-muted"></i></span
-              >
-              <input
-                type="text"
-                class="form-control border-start-0"
-                id="search-users"
-                placeholder="Buscar por nombre, correo..."
-              />
-            </div>
-            <button class="btn btn-primary fw-bold px-4" id="btn-buscar"
-              >Buscar</button
-            >
-          </div>
+    <!-- Card 2: Lista de Usuarios Registrados -->
+    <div class="card-technical">
+      <div class="card-header-technical d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+        <div>
+          <h6 class="mb-0 fw-semibold text-light" style="font-size: 14.5px;">Directorio de personas autorizadas</h6>
+          <span class="text-muted small" style="font-size: 12px;">Colaboradores con credenciales y llaves de acceso registradas.</span>
         </div>
+        <div class="d-flex gap-2">
+          <input 
+            type="text" 
+            class="form-control form-control-dark" 
+            id="search-users" 
+            placeholder="Buscar por nombre, correo..." 
+            style="min-width: 260px;"
+          />
+          <button class="btn-secondary-dark" id="btn-buscar">Filtrar</button>
+        </div>
+      </div>
 
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light text-muted small">
-              <tr>
-                <th class="ps-3">Usuario</th>
-                <th>Correo corporativo</th>
-                <th>Área</th>
-                <th>Llaves RFID Asignadas</th>
-                <th>Estado</th>
-                <th class="text-end pe-3">Acción</th>
-              </tr>
-            </thead>
-            <tbody id="users-table-body">
-              <tr>
-                <td colspan="6" class="text-center py-4 text-muted"
-                  >Cargando usuarios...</td
-                >
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="table-responsive">
+        <table class="table-technical">
+          <thead>
+            <tr>
+              <th class="ps-4">Persona</th>
+              <th>Correo institucional</th>
+              <th>Área / Departamento</th>
+              <th>Credenciales RFID asociadas</th>
+              <th>Estado</th>
+              <th class="text-end pe-4">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="users-table-body">
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted font-mono" style="font-size: 12.5px;">Sincronizando usuarios...</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
 
   <!-- Modal Crear Persona -->
   <div class="modal fade" id="modalCrearPersona" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <div class="modal-header bg-dark text-white py-3">
-          <h5 class="modal-title fw-bold">
-            <i class="bi bi-person-plus me-2"></i>Registrar nueva persona
-          </h5>
-          <button
-            type="button"
-            class="btn-close btn-close-white"
-            data-bs-dismiss="modal"></button>
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+      <div class="modal-content modal-content-dark">
+        <div class="modal-header border-0 pb-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <div class="brand-icon-box" style="width: 24px; height: 24px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+            </div>
+            <h6 class="modal-title fw-semibold text-light mb-0" style="font-size: 14.5px;">Registrar nueva persona</h6>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
         </div>
         <form id="form-crear-persona">
           <div class="modal-body p-4">
             <div id="persona-modal-alert"></div>
             <div class="row g-3 mb-3">
               <div class="col-6">
-                <label class="form-label fw-bold small text-dark">Nombre</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="p-nombre"
-                  placeholder="Jose"
-                  required
-                />
+                <label class="form-label text-secondary small fw-medium mb-1">Nombre</label>
+                <input type="text" class="form-control form-control-dark" id="p-nombre" placeholder="Ada" required />
               </div>
               <div class="col-6">
-                <label class="form-label fw-bold small text-dark"
-                  >Apellido</label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="p-apellido"
-                  placeholder="Ortiz"
-                  required
-                />
+                <label class="form-label text-secondary small fw-medium mb-1">Apellido</label>
+                <input type="text" class="form-control form-control-dark" id="p-apellido" placeholder="Lovelace" required />
               </div>
             </div>
             <div class="mb-3">
-              <label class="form-label fw-bold small text-dark"
-                >Correo corporativo</label
-              >
-              <input
-                type="email"
-                class="form-control"
-                id="p-correo"
-                placeholder="j.ortiz@empresa.pe"
-                required
-              />
+              <label class="form-label text-secondary small fw-medium mb-1">Correo corporativo</label>
+              <input type="email" class="form-control form-control-dark font-mono" id="p-correo" placeholder="a.lovelace@organizacion.com" required />
             </div>
             <div class="row g-3">
               <div class="col-6">
-                <label class="form-label fw-bold small text-dark"
-                  >Área / Departamento</label
-                >
-                <input
-                  type="text"
-                  class="form-control"
-                  id="p-area"
-                  placeholder="Arquitectura IoT"
-                  required
-                />
+                <label class="form-label text-secondary small fw-medium mb-1">Área / Depto</label>
+                <input type="text" class="form-control form-control-dark" id="p-area" placeholder="Infraestructura IoT" required />
               </div>
               <div class="col-6">
-                <label class="form-label fw-bold small text-dark"
-                  >Rol del sistema</label
-                >
-                <select class="form-select" id="p-rol">
-                  <option value="USUARIO">Operador / Usuario</option>
+                <label class="form-label text-secondary small fw-medium mb-1">Rol</label>
+                <select class="form-select form-select-dark" id="p-rol">
+                  <option value="USUARIO">Personal / Operador</option>
                   <option value="ADMIN">Administrador</option>
                 </select>
               </div>
             </div>
           </div>
-          <div class="modal-footer bg-light py-2">
-            <button
-              type="button"
-              class="btn btn-secondary btn-sm fw-bold px-3"
-              data-bs-dismiss="modal">Cancelar</button
-            >
-            <button type="submit" class="btn btn-primary btn-sm fw-bold px-4"
-              >Guardar Persona</button
-            >
+          <div class="modal-footer border-0 pt-0 pb-4 px-4 d-flex justify-content-end gap-2">
+            <button type="button" class="btn-secondary-dark" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn-primary-dark">Guardar persona</button>
           </div>
         </form>
       </div>
@@ -252,8 +184,7 @@ import Footer from "../components/Footer.astro";
 </Layout>
 
 <script>
-  const API_URL =
-    import.meta.env.PUBLIC_API_URL || "https://api.openiotcore.org";
+  const API_URL = import.meta.env.PUBLIC_API_URL || "https://api.openiotcore.org";
   let isListening = false;
   let webSocketInstance: WebSocket | null = null;
 
@@ -280,7 +211,7 @@ import Footer from "../components/Footer.astro";
       const res = await fetch(`${API_URL}/api/v1/users`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error("Error al cargar usuarios");
+      if (!res.ok) throw new Error("Error al consultar usuarios");
 
       let users = await res.json();
       const credsRes = await fetch(`${API_URL}/api/v1/credentials`, {
@@ -311,13 +242,12 @@ import Footer from "../components/Footer.astro";
       if (!tbody) return;
 
       if (users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">No se encontraron usuarios.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted font-mono" style="font-size: 12.5px;">No se encontraron registros coincidentes.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = users
         .map((u: any) => {
-          // Filter ALL credentials matching this user (supports multiple RFID cards)
           const userCreds = creds.filter((c: any) => c.usuario_id === u.id);
 
           const rfidHtml =
@@ -325,43 +255,45 @@ import Footer from "../components/Footer.astro";
               ? userCreds
                   .map(
                     (c: any) => `
-              <div class="d-inline-flex align-items-center bg-light border px-2 py-1 rounded me-1 mb-1 shadow-sm">
-                <code class="text-dark fw-bold me-1 font-monospace" style="font-size: 13px;">${c.uid_hex}</code>
+              <div class="uid-badge me-1 mb-1">
+                <span>${c.uid_hex}</span>
                 ${
                   c.estado === "REVOCADA"
-                    ? '<span class="badge bg-danger-subtle text-danger border border-danger-subtle" style="font-size: 9px;">REVOCADA</span>'
-                    : `<button type="button" class="btn btn-link p-0 ms-1 text-danger btn-revoke-single text-decoration-none" data-cred-id="${c.id}" data-uid="${c.uid_hex}" title="Revocar tarjeta ${c.uid_hex}"><i class="bi bi-x-circle-fill"></i></button>`
+                    ? '<span class="status-pill status-denied font-mono" style="font-size: 9px; padding: 1px 4px;">Revocada</span>'
+                    : `<button type="button" class="btn p-0 text-muted btn-revoke-single border-0" data-cred-id="${c.id}" data-uid="${c.uid_hex}" title="Revocar tarjeta ${c.uid_hex}">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>`
                 }
               </div>
             `,
                   )
                   .join("")
-              : '<span class="text-muted small">Sin tarjeta asignada</span>';
+              : '<span class="text-muted small font-mono" style="font-size: 11.5px;">Sin credencial</span>';
+
+          const estadoHtml = u.estado === "ACTIVO"
+            ? `<span class="status-pill status-granted"><span class="metric-status-dot dot-online"></span>Activo</span>`
+            : `<span class="status-pill status-neutral"><span class="metric-status-dot dot-amber"></span>Inactivo</span>`;
 
           return `
           <tr>
-            <td class="ps-3 fw-bold text-dark">${u.nombre} ${u.apellido}</td>
-            <td class="text-muted">${u.correo}</td>
-            <td>${u.departamento || "General"}</td>
+            <td class="ps-4 fw-medium text-light">${u.nombre} ${u.apellido}</td>
+            <td class="text-secondary font-mono" style="font-size: 12.5px;">${u.correo}</td>
+            <td class="text-secondary">${u.departamento || "General"}</td>
             <td>
               <div class="d-flex flex-wrap align-items-center">
                 ${rfidHtml}
               </div>
             </td>
-            <td>
-              <span class="badge ${u.estado === "ACTIVO" ? "bg-success-subtle text-success border border-success-subtle" : "bg-secondary-subtle text-secondary"} px-2 py-1">
-                <i class="bi bi-circle-fill me-1" style="font-size: 7px;"></i>${u.estado}
-              </span>
-            </td>
-            <td class="text-end pe-3">
+            <td>${estadoHtml}</td>
+            <td class="text-end pe-4">
               ${
                 userCreds.length > 0
                   ? `
-                <button class="btn btn-outline-secondary btn-sm px-3 btn-revoke-all" data-user-name="${u.nombre}" data-cred-ids='${JSON.stringify(userCreds.map((c: any) => c.id))}'>
-                  Revocar Todo
+                <button class="btn-secondary-dark font-mono btn-revoke-all" style="font-size: 11px; padding: 3px 8px;" data-user-name="${u.nombre}" data-cred-ids='${JSON.stringify(userCreds.map((c: any) => c.id))}'>
+                  Revocar
                 </button>
               `
-                  : '<span class="text-muted small">--</span>'
+                  : '<span class="text-muted font-mono" style="font-size: 11px;">--</span>'
               }
             </td>
           </tr>
@@ -369,37 +301,22 @@ import Footer from "../components/Footer.astro";
         })
         .join("");
 
-      // Click event for revoking individual card
       document.querySelectorAll(".btn-revoke-single").forEach((btn) => {
         btn.addEventListener("click", (e) => {
-          const credId = (e.currentTarget as HTMLButtonElement).getAttribute(
-            "data-cred-id",
-          );
-          const uid = (e.currentTarget as HTMLButtonElement).getAttribute(
-            "data-uid",
-          );
+          const credId = (e.currentTarget as HTMLButtonElement).getAttribute("data-cred-id");
+          const uid = (e.currentTarget as HTMLButtonElement).getAttribute("data-uid");
           if (credId) revokeCredential(credId, uid || "");
         });
       });
 
-      // Click event for revoking all cards for user
       document.querySelectorAll(".btn-revoke-all").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
-          const name = (e.currentTarget as HTMLButtonElement).getAttribute(
-            "data-user-name",
-          );
-          const rawIds = (e.currentTarget as HTMLButtonElement).getAttribute(
-            "data-cred-ids",
-          );
+          const name = (e.currentTarget as HTMLButtonElement).getAttribute("data-user-name");
+          const rawIds = (e.currentTarget as HTMLButtonElement).getAttribute("data-cred-ids");
           if (!rawIds) return;
           const ids: string[] = JSON.parse(rawIds);
 
-          if (
-            !confirm(
-              `¿Seguro que deseas revocar TODAS las ${ids.length} tarjetas de ${name}?`,
-            )
-          )
-            return;
+          if (!confirm(`¿Confirmas revocar las ${ids.length} tarjetas asociadas a ${name}?`)) return;
           for (const id of ids) {
             await revokeCredentialSilent(id);
           }
@@ -408,14 +325,12 @@ import Footer from "../components/Footer.astro";
       });
     } catch (e) {
       if (tbody)
-        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger">Error cargando usuarios.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-danger font-mono small">Error al consultar usuarios.</td></tr>`;
     }
   }
 
   async function loadDevicesForSelect() {
-    const selectDev = document.getElementById(
-      "select-lector",
-    ) as HTMLSelectElement;
+    const selectDev = document.getElementById("select-lector") as HTMLSelectElement;
     const token = localStorage.getItem("token");
     try {
       const res = await fetch(`${API_URL}/api/v1/devices/my-devices`, {
@@ -425,11 +340,11 @@ import Footer from "../components/Footer.astro";
       const devices = await res.json();
       if (selectDev && devices.length > 0) {
         selectDev.innerHTML =
-          `<option selected disabled value="">Seleccionar Lector</option>` +
+          `<option selected disabled value="">Seleccionar lector ESP32...</option>` +
           devices
             .map(
               (d: any) =>
-                `<option value="${d.id}">${d.ubicacion} (${d.id})</option>`,
+                `<option value="${d.id}">${d.ubicacion} (${d.id.substring(0, 8)})</option>`,
             )
             .join("");
       }
@@ -438,7 +353,6 @@ import Footer from "../components/Footer.astro";
 
   function setupListeningState() {
     const btnEscuchar = document.getElementById("btn-escuchar");
-    const statusEscuchar = document.getElementById("status-escuchar");
     const btnSimular = document.getElementById("btn-simular-rfid");
 
     btnEscuchar?.addEventListener("click", () => {
@@ -455,36 +369,37 @@ import Footer from "../components/Footer.astro";
         "0CDC4305",
         "A4B2C190",
       ];
-      const randomUid =
-        sampleUids[Math.floor(Math.random() * sampleUids.length)];
-      handleDetectedCard(randomUid, "Simulación de prueba");
+      const randomUid = sampleUids[Math.floor(Math.random() * sampleUids.length)];
+      handleDetectedCard(randomUid, "Simulación");
     });
   }
 
   function updateListeningUI() {
     const btnEscuchar = document.getElementById("btn-escuchar");
     const statusEscuchar = document.getElementById("status-escuchar");
-    const selectLector =
-      (document.getElementById("select-lector") as HTMLSelectElement)?.value ||
-      "Lector de Enrolamiento";
 
     if (isListening) {
       if (btnEscuchar) {
-        btnEscuchar.className = "btn btn-danger fw-bold px-3";
-        btnEscuchar.innerHTML = `<i class="bi bi-stop-circle me-1"></i> Detener`;
+        btnEscuchar.classList.add("btn-primary-dark");
+        btnEscuchar.classList.remove("btn-secondary-dark");
+        btnEscuchar.innerHTML = `<span>Detener</span>`;
       }
       if (statusEscuchar) {
-        statusEscuchar.className = "text-success fw-semibold d-block mt-1";
-        statusEscuchar.innerHTML = `<i class="bi bi-broadcast me-1 text-danger"></i> Escuchando en vivo en "${selectLector}"... Acerca una tarjeta RFID al cerrojo.`;
+        statusEscuchar.className = "text-light font-mono small mt-1 d-flex align-items-center gap-2";
+        statusEscuchar.innerHTML = `<span class="metric-status-dot dot-online"></span> Escuchando aproximación RFID en tiempo real...`;
       }
     } else {
       if (btnEscuchar) {
-        btnEscuchar.className = "btn btn-dark fw-bold px-3";
-        btnEscuchar.innerHTML = `<i class="bi bi-broadcast me-1"></i> Escuchar`;
+        btnEscuchar.classList.add("btn-secondary-dark");
+        btnEscuchar.classList.remove("btn-primary-dark");
+        btnEscuchar.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></svg>
+          <span>Escuchar</span>
+        `;
       }
       if (statusEscuchar) {
-        statusEscuchar.className = "text-secondary d-block mt-1";
-        statusEscuchar.innerHTML = `<i class="bi bi-info-circle me-1"></i> Haz clic en "Escuchar" o aproxima una tarjeta a la cerradura.`;
+        statusEscuchar.className = "text-muted font-mono small mt-1";
+        statusEscuchar.innerHTML = `Pulsa "Escuchar" o aproxima una tarjeta a cualquier cerradura vinculada.`;
       }
     }
   }
@@ -492,22 +407,14 @@ import Footer from "../components/Footer.astro";
   function handleDetectedCard(uidHex: string, source: string = "WebSocket") {
     const inputUid = document.getElementById("input-uid") as HTMLInputElement;
     const helper = document.getElementById("helper-vincular");
-    const statusEscuchar = document.getElementById("status-escuchar");
 
     if (inputUid) {
       inputUid.value = uidHex.toUpperCase();
-      inputUid.classList.add("is-valid", "border-success", "bg-success-subtle");
-      setTimeout(() => inputUid.classList.remove("bg-success-subtle"), 2000);
     }
 
     if (helper) {
-      helper.className = "text-success fw-bold d-block mt-1";
-      helper.innerHTML = `<i class="bi bi-check-circle-fill me-1"></i> ¡Tarjeta ${uidHex.toUpperCase()} capturada (${source})! Ahora elige un usuario y presiona Vincular.`;
-    }
-
-    if (statusEscuchar) {
-      statusEscuchar.className = "text-success fw-bold d-block mt-1";
-      statusEscuchar.innerHTML = `<i class="bi bi-check2-circle me-1"></i> Lectura recibida: <strong>${uidHex.toUpperCase()}</strong>`;
+      helper.className = "text-light font-mono small mt-1 d-flex align-items-center gap-2";
+      helper.innerHTML = `<span class="metric-status-dot dot-online"></span> Lectura capturada (${uidHex.toUpperCase()} vía ${source}). Asigna el usuario y confirma.`;
     }
 
     isListening = false;
@@ -515,8 +422,7 @@ import Footer from "../components/Footer.astro";
   }
 
   async function revokeCredential(credId: string, uid: string) {
-    if (!confirm(`¿Seguro que deseas revocar la tarjeta ${uid || credId}?`))
-      return;
+    if (!confirm(`¿Confirmas revocar la tarjeta ${uid || credId}?`)) return;
     await revokeCredentialSilent(credId);
     loadUsers();
   }
@@ -524,13 +430,10 @@ import Footer from "../components/Footer.astro";
   async function revokeCredentialSilent(credId: string) {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(
-        `${API_URL}/api/v1/credentials/${credId}/revoke`,
-        {
-          method: "PATCH",
-          headers: { Authorization: `Bearer ${token}` },
-        },
-      );
+      const res = await fetch(`${API_URL}/api/v1/credentials/${credId}/revoke`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (!res.ok) throw new Error("Error al revocar");
     } catch (e: any) {
       console.error(e.message);
@@ -538,32 +441,18 @@ import Footer from "../components/Footer.astro";
   }
 
   function setupForms() {
-    const formCrear = document.getElementById(
-      "form-crear-persona",
-    ) as HTMLFormElement;
-    const formVincular = document.getElementById(
-      "form-vincular-tarjeta",
-    ) as HTMLFormElement;
-    const alertModal = document.getElementById(
-      "persona-modal-alert",
-    ) as HTMLDivElement;
+    const formCrear = document.getElementById("form-crear-persona") as HTMLFormElement;
+    const formVincular = document.getElementById("form-vincular-tarjeta") as HTMLFormElement;
+    const alertModal = document.getElementById("persona-modal-alert") as HTMLDivElement;
 
     formCrear?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const token = localStorage.getItem("token");
       const payload = {
-        nombre: (
-          document.getElementById("p-nombre") as HTMLInputElement
-        ).value.trim(),
-        apellido: (
-          document.getElementById("p-apellido") as HTMLInputElement
-        ).value.trim(),
-        correo: (
-          document.getElementById("p-correo") as HTMLInputElement
-        ).value.trim(),
-        departamento: (
-          document.getElementById("p-area") as HTMLInputElement
-        ).value.trim(),
+        nombre: (document.getElementById("p-nombre") as HTMLInputElement).value.trim(),
+        apellido: (document.getElementById("p-apellido") as HTMLInputElement).value.trim(),
+        correo: (document.getElementById("p-correo") as HTMLInputElement).value.trim(),
+        departamento: (document.getElementById("p-area") as HTMLInputElement).value.trim(),
         rol: (document.getElementById("p-rol") as HTMLSelectElement).value,
       };
 
@@ -577,27 +466,23 @@ import Footer from "../components/Footer.astro";
           body: JSON.stringify(payload),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Error al crear persona");
+        if (!res.ok) throw new Error(data.error || "Error al registrar persona");
 
-        alertModal.innerHTML = `<div class="alert alert-success">¡Persona creada con éxito!</div>`;
+        alertModal.innerHTML = `<div class="status-pill status-granted w-100 py-2 justify-content-center mb-3">Persona registrada correctamente</div>`;
         setTimeout(() => window.location.reload(), 800);
       } catch (err: any) {
-        alertModal.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        alertModal.innerHTML = `<div class="status-pill status-denied w-100 py-2 justify-content-center mb-3">${err.message}</div>`;
       }
     });
 
     formVincular?.addEventListener("submit", async (e) => {
       e.preventDefault();
       const token = localStorage.getItem("token");
-      const uid = (
-        document.getElementById("input-uid") as HTMLInputElement
-      ).value.trim();
-      const usuarioId = (
-        document.getElementById("select-usuario-asignar") as HTMLSelectElement
-      ).value;
+      const uid = (document.getElementById("input-uid") as HTMLInputElement).value.trim();
+      const usuarioId = (document.getElementById("select-usuario-asignar") as HTMLSelectElement).value;
 
       if (!uid || !usuarioId) {
-        alert("Por favor, selecciona una tarjeta y un usuario.");
+        alert("Selecciona una tarjeta y un usuario destinatario.");
         return;
       }
 
@@ -620,11 +505,8 @@ import Footer from "../components/Footer.astro";
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Error al vincular tarjeta");
 
-        alert(`¡Tarjeta ${uid.toUpperCase()} vinculada exitosamente!`);
         (document.getElementById("input-uid") as HTMLInputElement).value = "";
-        (
-          document.getElementById("select-usuario-asignar") as HTMLSelectElement
-        ).value = "";
+        (document.getElementById("select-usuario-asignar") as HTMLSelectElement).value = "";
         loadUsers();
       } catch (err: any) {
         alert(err.message);
@@ -632,9 +514,7 @@ import Footer from "../components/Footer.astro";
     });
 
     document.getElementById("btn-buscar")?.addEventListener("click", () => {
-      const q = (
-        document.getElementById("search-users") as HTMLInputElement
-      ).value.trim();
+      const q = (document.getElementById("search-users") as HTMLInputElement).value.trim();
       loadUsers(q);
     });
   }
@@ -646,36 +526,19 @@ import Footer from "../components/Footer.astro";
     try {
       const wsProto = window.location.protocol === "https:" ? "wss:" : "ws:";
       const host = API_URL.replace("http://", "").replace("https://", "");
-      const ws = new WebSocket(
-        `${wsProto}//${host}/ws?type=web&token=${token}`,
-      );
+      const ws = new WebSocket(`${wsProto}//${host}/ws?type=web&token=${token}`);
       webSocketInstance = ws;
-
-      ws.onopen = () => {
-        console.log("[WS] Conectado para monitoreo de enrolamiento");
-      };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
-
           if (msg.event === "card_scanned" && msg.payload?.uid_hex) {
-            handleDetectedCard(
-              msg.payload.uid_hex,
-              `Cerradura ${msg.payload.deviceId || ""}`,
-            );
+            handleDetectedCard(msg.payload.uid_hex, `Cerradura ${msg.payload.deviceId || ""}`);
           } else if (msg.event === "access_event" && msg.payload?.uid_hex) {
-            handleDetectedCard(
-              msg.payload.uid_hex,
-              `Intento en ${msg.payload.device_id || "Cerradura"}`,
-            );
+            handleDetectedCard(msg.payload.uid_hex, `Lector ${msg.payload.device_id || ""}`);
           }
         } catch (e) {}
       };
-
-      ws.onerror = (err) => console.warn("[WS] Error en socket:", err);
-    } catch (e) {
-      console.warn("[WS] No se pudo establecer conexión WebSocket:", e);
-    }
+    } catch (e) {}
   }
 </script>

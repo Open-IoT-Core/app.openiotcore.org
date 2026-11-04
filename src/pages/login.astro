@@ -3,40 +3,58 @@ import Layout from '../layouts/Layout.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Iniciar Sesión - OpenIoTCore">
-  <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5">
-    <div class="card shadow-lg border-0 style-card style-width" style="max-width: 420px; width: 100%;">
-      <div class="card-header bg-dark text-white text-center py-4">
-        <h3 class="fw-bold mb-0 text-warning">
-          <i class="bi bi-shield-lock-fill me-2"></i>OpenIoTCore
-        </h3>
-        <small class="text-white-50">Acceso a Cerraduras Inteligentes</small>
+<Layout title="Iniciar Sesión · OpenIoTCore">
+  <div class="container d-flex flex-column justify-content-center align-items-center flex-grow-1 py-5" style="max-width: 440px;">
+    <div class="card-technical w-100 p-4">
+      <!-- Brand & Header -->
+      <div class="text-center mb-4">
+        <div class="brand-icon-box mx-auto mb-3" style="width: 40px; height: 40px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2"/>
+            <path d="M7 7h.01"/>
+            <path d="M17 7h.01"/>
+            <path d="M7 17h.01"/>
+            <path d="M17 17h.01"/>
+          </svg>
+        </div>
+        <h5 class="fw-semibold text-light mb-1" style="font-size: 18px; letter-spacing: -0.02em;">OpenIoTCore</h5>
+        <span class="text-secondary small" style="font-size: 13px;">Consola de control de acceso físico</span>
       </div>
-      <div class="card-body p-4">
-        <div id="alert-container"></div>
-        <form id="login-form">
-          <div class="mb-3">
-            <label for="correo" class="form-label fw-bold">Correo Electrónico</label>
-            <div class="input-group">
-              <span class="input-group-text bg-light"><i class="bi bi-envelope-fill"></i></span>
-              <input type="email" class="form-control" id="correo" placeholder="usuario@empresa.com" required />
-            </div>
-          </div>
-          <div class="mb-4">
-            <label for="clave" class="form-label fw-bold">Contraseña</label>
-            <div class="input-group">
-              <span class="input-group-text bg-light"><i class="bi bi-key-fill"></i></span>
-              <input type="password" class="form-control" id="clave" placeholder="••••••••" required />
-            </div>
-          </div>
-          <button type="submit" class="btn btn-warning w-100 fw-bold text-dark py-2" id="btn-submit">
-            <i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión
-          </button>
-        </form>
-      </div>
-      <div class="card-footer bg-light text-center py-3">
-        <span class="text-muted">¿No tienes una cuenta?</span>
-        <a href="/register" class="fw-bold text-dark text-decoration-none ms-1">Regístrate aquí</a>
+
+      <div id="alert-container"></div>
+
+      <form id="login-form">
+        <div class="mb-3">
+          <label for="correo" class="form-label text-secondary small fw-medium mb-1">Correo electrónico</label>
+          <input 
+            type="email" 
+            class="form-control form-control-dark font-mono" 
+            id="correo" 
+            placeholder="operador@organizacion.com" 
+            required 
+            autocomplete="email"
+          />
+        </div>
+        <div class="mb-4">
+          <label for="clave" class="form-label text-secondary small fw-medium mb-1">Contraseña de acceso</label>
+          <input 
+            type="password" 
+            class="form-control form-control-dark font-mono" 
+            id="clave" 
+            placeholder="••••••••••••" 
+            required 
+            autocomplete="current-password"
+          />
+        </div>
+        <button type="submit" class="btn-primary-dark w-100 py-2 d-flex align-items-center justify-content-center gap-2 mb-3" id="btn-submit">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>Ingresar a la consola</span>
+        </button>
+      </form>
+
+      <div class="text-center pt-3" style="border-top: 1px solid var(--border-hairline);">
+        <span class="text-muted small">¿No tienes credenciales?</span>
+        <a href="/register" class="text-secondary fw-medium small text-decoration-none ms-1" style="color: var(--accent-cyan) !important;">Registrar operador</a>
       </div>
     </div>
   </div>
@@ -47,7 +65,6 @@ import Footer from '../components/Footer.astro';
   const API_URL = import.meta.env.PUBLIC_API_URL || 'https://api.openiotcore.org';
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Si ya está autenticado, redirigir al panel
     if (localStorage.getItem('token')) {
       window.location.href = '/dashboard';
       return;
@@ -57,7 +74,7 @@ import Footer from '../components/Footer.astro';
     const alertContainer = document.getElementById('alert-container') as HTMLDivElement;
     const btnSubmit = document.getElementById('btn-submit') as HTMLButtonElement;
 
-    form.addEventListener('submit', async (e) => {
+    form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       alertContainer.innerHTML = '';
 
@@ -65,7 +82,7 @@ import Footer from '../components/Footer.astro';
       const clave = (document.getElementById('clave') as HTMLInputElement).value;
 
       btnSubmit.disabled = true;
-      btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Ingresando...';
+      btnSubmit.innerHTML = `<span class="spinner-border spinner-border-sm me-2" style="width: 13px; height: 13px;"></span>Autenticando...`;
 
       try {
         const res = await fetch(`${API_URL}/api/v1/auth/login`, {
@@ -77,30 +94,33 @@ import Footer from '../components/Footer.astro';
         const data = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.error || 'Credenciales inválidas');
+          throw new Error(data.error || 'Credenciales no autorizadas');
         }
 
         localStorage.setItem('token', data.token);
         localStorage.setItem('usuario', JSON.stringify(data.usuario));
 
         alertContainer.innerHTML = `
-          <div class="alert alert-success d-flex align-items-center mb-3" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i> ¡Inicio de sesión exitoso! Redirigiendo...
+          <div class="status-pill status-granted w-100 py-2 justify-content-center mb-3">
+            Sesión validada. Redirigiendo a la consola...
           </div>
         `;
 
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 1000);
+        }, 600);
 
       } catch (err: any) {
         alertContainer.innerHTML = `
-          <div class="alert alert-danger d-flex align-items-center mb-3" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i> ${err.message || 'Error al conectar con la API'}
+          <div class="status-pill status-denied w-100 py-2 justify-content-center mb-3">
+            ${err.message || 'Error de conexión con el servidor'}
           </div>
         `;
         btnSubmit.disabled = false;
-        btnSubmit.innerHTML = '<i class="bi bi-box-arrow-in-right me-1"></i> Iniciar Sesión';
+        btnSubmit.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <span>Ingresar a la consola</span>
+        `;
       }
     });
   });

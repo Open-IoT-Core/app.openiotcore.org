@@ -4,150 +4,129 @@ import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
 ---
 
-<Layout title="Control de Acceso - Reglas y Permisos - OpenIoTCore">
+<Layout title="Reglas y Horarios de Acceso · OpenIoTCore">
   <Navbar />
 
-  <main class="container-fluid px-4 py-4 flex-grow-1">
+  <main class="container-fluid px-4 py-4 flex-grow-1" style="max-width: 1440px;">
     <!-- Header -->
     <div class="mb-4">
-      <h3 class="fw-bold text-dark mb-1">
-        Asignar regla de acceso y horarios
-      </h3>
-      <p class="text-muted small mb-0">Configura en qué puertas, días y horarios específicos tendrá autorización esta persona.</p>
+      <h6 class="mb-1 fw-semibold text-light" style="font-size: 15px;">Matriz de permisos y horarios autorizados</h6>
+      <p class="text-secondary small mb-0" style="font-size: 12.5px;">Configuración de ventanas horarias, días de la semana y puertas asignadas a cada colaborador.</p>
     </div>
 
     <div id="perm-alert"></div>
 
     <!-- Formulario Principal -->
-    <div class="card shadow-sm border-0 mb-4">
-      <div class="card-body p-4">
-        <form id="form-permission">
-          <!-- Fila 1: Persona autorizada & Puerta/Área -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-dark">Persona autorizada</label>
-              <select class="form-select" id="select-persona" required>
-                <option value="">Cargando personas...</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label fw-bold small text-dark">Puerta o área</label>
-              <select class="form-select" id="select-puerta" required>
-                <option value="">Cargando puertas...</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Días de la semana permitidos -->
-          <div class="mb-4">
-            <label class="form-label fw-bold small text-dark d-block">Días de la semana permitidos</label>
-            <div class="d-flex flex-wrap gap-3">
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="1" id="day-lun" checked />
-                <label class="form-check-label small fw-semibold" for="day-lun">Lun</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="2" id="day-mar" checked />
-                <label class="form-check-label small fw-semibold" for="day-mar">Mar</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="3" id="day-mie" checked />
-                <label class="form-check-label small fw-semibold" for="day-mie">Mié</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="4" id="day-jue" checked />
-                <label class="form-check-label small fw-semibold" for="day-jue">Jue</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="5" id="day-vie" checked />
-                <label class="form-check-label small fw-semibold" for="day-vie">Vie</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="6" id="day-sab" checked />
-                <label class="form-check-label small fw-semibold" for="day-sab">Sáb</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="7" id="day-dom" />
-                <label class="form-check-label small fw-semibold" for="day-dom">Dom</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Horarios y Vigencia -->
-          <div class="row g-3 mb-4">
-            <div class="col-md-4">
-              <label class="form-label fw-bold small text-dark">Hora de inicio</label>
-              <div class="input-group">
-                <input type="time" class="form-control" id="hora-inicio" value="08:00" required />
-                <span class="input-group-text bg-white"><i class="bi bi-clock text-muted"></i></span>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold small text-dark">Hora de salida</label>
-              <div class="input-group">
-                <input type="time" class="form-control" id="hora-fin" value="18:00" required />
-                <span class="input-group-text bg-white"><i class="bi bi-clock text-muted"></i></span>
-              </div>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label fw-bold small text-dark">Vigencia hasta</label>
-              <div class="input-group">
-                <input type="date" class="form-control" id="fecha-limite" value="2026-12-31" required />
-                <span class="input-group-text bg-white"><i class="bi bi-calendar3 text-muted"></i></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Estado de la autorización -->
-          <div class="mb-4">
-            <label class="form-label fw-bold small text-dark d-block">Estado de la autorización</label>
-            <div class="d-flex gap-4">
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="perm-status" id="status-enabled" value="true" checked />
-                <label class="form-check-label small fw-bold text-dark" for="status-enabled">Habilitado</label>
-              </div>
-              <div class="form-check">
-                <input class="form-check-input" type="radio" name="perm-status" id="status-paused" value="false" />
-                <label class="form-check-label small text-muted" for="status-paused">Pausado temporalmente</label>
-              </div>
-            </div>
-          </div>
-
-          <!-- Botones de Acción -->
-          <div class="d-flex justify-content-end gap-3 pt-3 border-top">
-            <button type="reset" class="btn btn-outline-secondary px-4 fw-bold">Cancelar</button>
-            <button type="submit" class="btn btn-primary px-4 fw-bold" id="btn-save-perm">
-              <i class="bi bi-arrow-repeat me-1"></i> Guardar y sincronizar con la puerta
-            </button>
-          </div>
-        </form>
+    <div class="card-technical mb-4 p-4">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-secondary"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <h6 class="fw-semibold text-light mb-0" style="font-size: 14px;">Asignar nueva política de acceso</h6>
       </div>
+
+      <form id="form-permission">
+        <!-- Fila 1: Persona autorizada & Puerta/Área -->
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="form-label text-secondary small fw-medium mb-1">Colaborador autorizado</label>
+            <select class="form-select form-select-dark" id="select-persona" required>
+              <option value="">Cargando personas...</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label text-secondary small fw-medium mb-1">Punto de acceso / Dispositivo</label>
+            <select class="form-select form-select-dark" id="select-puerta" required>
+              <option value="">Cargando dispositivos...</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Días de la semana permitidos (Tactile Chip Selectors) -->
+        <div class="mb-3">
+          <label class="form-label text-secondary small fw-medium mb-1 d-block">Días de la semana permitidos</label>
+          <div class="d-flex flex-wrap gap-2">
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="1" id="day-lun" checked autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-lun">Lun</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="2" id="day-mar" checked autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-mar">Mar</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="3" id="day-mie" checked autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-mie">Mié</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="4" id="day-jue" checked autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-jue">Jue</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="5" id="day-vie" checked autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-vie">Vie</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="6" id="day-sab" autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-sab">Sáb</label>
+            </div>
+            <div class="form-check form-check-inline m-0">
+              <input class="btn-check" type="checkbox" value="7" id="day-dom" autocomplete="off" />
+              <label class="btn btn-secondary-dark font-mono" style="font-size: 12px; padding: 5px 12px;" for="day-dom">Dom</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Horarios y Vigencia -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label text-secondary small fw-medium mb-1">Hora inicio</label>
+            <input type="time" class="form-control form-control-dark font-mono" id="hora-inicio" value="08:00" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-secondary small fw-medium mb-1">Hora final</label>
+            <input type="time" class="form-control form-control-dark font-mono" id="hora-fin" value="18:00" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label text-secondary small fw-medium mb-1">Fecha límite de vigencia</label>
+            <input type="date" class="form-control form-control-dark font-mono" id="fecha-limite" value="2026-12-31" required />
+          </div>
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="d-flex justify-content-end gap-2 pt-3" style="border-top: 1px solid var(--border-hairline);">
+          <button type="reset" class="btn-secondary-dark">Restablecer</button>
+          <button type="submit" class="btn-primary-dark d-inline-flex align-items-center gap-2" id="btn-save-perm">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Sincronizar regla con el nodo</span>
+          </button>
+        </div>
+      </form>
     </div>
 
     <!-- Reglas Configuradas Actuales -->
-    <div class="card shadow-sm border-0">
-      <div class="card-header bg-white py-3">
-        <h5 class="fw-bold text-dark mb-0">Reglas y permisos activos</h5>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="bg-light text-muted small">
-              <tr>
-                <th class="ps-4">Persona</th>
-                <th>Puerta</th>
-                <th>Horario</th>
-                <th>Días</th>
-                <th>Vigencia</th>
-                <th>Estado</th>
-                <th class="text-end pe-4">Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="permissions-table-body">
-              <tr><td colspan="7" class="text-center py-4 text-muted">Cargando reglas...</td></tr>
-            </tbody>
-          </table>
+    <div class="card-technical">
+      <div class="card-header-technical d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0 fw-semibold text-light" style="font-size: 14.5px;">Reglas y políticas activas</h6>
+          <span class="text-muted small" style="font-size: 12px;">Sincronizadas con la memoria local de cada cerradura IoT.</span>
         </div>
+      </div>
+      <div class="table-responsive">
+        <table class="table-technical">
+          <thead>
+            <tr>
+              <th class="ps-4">Colaborador</th>
+              <th>Punto de acceso</th>
+              <th>Horario permitido</th>
+              <th>Días de la semana</th>
+              <th>Vigencia</th>
+              <th>Estado</th>
+              <th class="text-end pe-4">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="permissions-table-body">
+            <tr><td colspan="7" class="text-center py-4 text-muted font-mono" style="font-size: 12.5px;">Consultando permisos...</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </main>
@@ -197,7 +176,7 @@ import Footer from '../components/Footer.astro';
 
       if (dRes.ok && selectDoor) {
         const doors = await dRes.json();
-        selectDoor.innerHTML = '<option value="">Selecciona una puerta...</option>' +
+        selectDoor.innerHTML = '<option value="">Selecciona un dispositivo...</option>' +
           doors.map((d: any) => `<option value="${d.id}">${d.ubicacion} (${d.zona_piso || 'Entrada'})</option>`).join('');
       }
     } catch (e) {}
@@ -216,24 +195,25 @@ import Footer from '../components/Footer.astro';
       if (!tbody) return;
 
       if (perms.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted">No hay reglas de acceso configuradas.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted font-mono" style="font-size: 12.5px;">No hay reglas de acceso registradas.</td></tr>`;
         return;
       }
 
       tbody.innerHTML = perms.map((p: any) => `
         <tr>
-          <td class="ps-4 fw-bold text-dark">${p.nombre} ${p.apellido}</td>
-          <td class="fw-medium">${p.ubicacion}</td>
-          <td class="small font-monospace text-secondary">${p.hora_inicio} - ${p.hora_fin}</td>
-          <td class="small fw-semibold text-primary">${formatDays(p.dias_semana)}</td>
-          <td class="small text-muted">${new Date(p.fecha_limite).toLocaleDateString()}</td>
+          <td class="ps-4 fw-medium text-light">${p.nombre} ${p.apellido}</td>
+          <td class="text-secondary">${p.ubicacion}</td>
+          <td class="font-mono text-light" style="font-size: 12.5px;">${p.hora_inicio} - ${p.hora_fin}</td>
+          <td><span class="uid-badge font-mono" style="font-size: 11px;">${formatDays(p.dias_semana)}</span></td>
+          <td class="font-mono text-muted" style="font-size: 12px;">${new Date(p.fecha_limite).toLocaleDateString()}</td>
           <td>
-            <span class="badge ${p.activo ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-secondary-subtle text-secondary'} px-2 py-1">
-              ${p.activo ? 'Habilitado' : 'Pausado'}
+            <span class="status-pill ${p.activo ? 'status-granted' : 'status-neutral'}">
+              <span class="metric-status-dot ${p.activo ? 'dot-online' : 'dot-amber'}"></span>
+              ${p.activo ? 'Vigente' : 'Pausado'}
             </span>
           </td>
           <td class="text-end pe-4">
-            <button class="btn btn-outline-danger btn-sm px-3 btn-delete-perm" data-perm-id="${p.id}">
+            <button class="btn-secondary-dark font-mono text-danger btn-delete-perm" style="font-size: 11px; padding: 3px 8px;" data-perm-id="${p.id}">
               Eliminar
             </button>
           </td>
@@ -248,12 +228,12 @@ import Footer from '../components/Footer.astro';
       });
 
     } catch (e) {
-      if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger">Error al cargar reglas.</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-danger font-mono small">Error al consultar permisos.</td></tr>`;
     }
   }
 
   async function deletePermission(id: string) {
-    if (!confirm('¿Seguro que deseas eliminar esta regla?')) return;
+    if (!confirm('¿Confirmas eliminar esta regla de acceso?')) return;
     const token = localStorage.getItem('token');
     try {
       const res = await fetch(`${API_URL}/api/v1/permissions/${id}`, {
@@ -283,7 +263,7 @@ import Footer from '../components/Footer.astro';
       });
 
       if (selectedDays.length === 0) {
-        alertEl.innerHTML = `<div class="alert alert-warning">Por favor selecciona al menos un día de la semana.</div>`;
+        alertEl.innerHTML = `<div class="status-pill status-denied w-100 py-2 justify-content-center mb-3">Selecciona al menos un día de la semana</div>`;
         return;
       }
 
@@ -309,10 +289,10 @@ import Footer from '../components/Footer.astro';
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Error al guardar regla');
 
-        alertEl.innerHTML = `<div class="alert alert-success">¡Regla de acceso guardada y sincronizada por WebSocket con la puerta!</div>`;
+        alertEl.innerHTML = `<div class="status-pill status-granted w-100 py-2 justify-content-center mb-3">Regla sincronizada en tiempo real con la cerradura</div>`;
         loadPermissions();
       } catch (err: any) {
-        alertEl.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+        alertEl.innerHTML = `<div class="status-pill status-denied w-100 py-2 justify-content-center mb-3">${err.message}</div>`;
       }
     });
   }
